@@ -36,7 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     // Check if an existing logged in user is in localStorage
-    const savedUser = localStorage.getItem("krishisetu_user");
+    const savedUser =
+      localStorage.getItem("agrosaathi_user") ||
+      localStorage.getItem("krishisetu_user");
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
@@ -65,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setUser(googleUser);
     if (typeof window !== "undefined") {
-      localStorage.setItem("krishisetu_user", JSON.stringify(googleUser));
+      localStorage.setItem("agrosaathi_user", JSON.stringify(googleUser));
     }
     setIsAuthModalOpen(false);
   };
@@ -73,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = () => {
     setUser(null);
     if (typeof window !== "undefined") {
+      localStorage.removeItem("agrosaathi_user");
       localStorage.removeItem("krishisetu_user");
     }
   };

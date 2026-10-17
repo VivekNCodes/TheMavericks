@@ -147,7 +147,7 @@ export const GoogleAuthModal: React.FC = () => {
             <>
               <div className="text-center space-y-1">
                 <h4 className="text-lg font-black text-slate-900">
-                  Welcome to KrishiSetu AI
+                  Welcome to AgroSaathi
                 </h4>
                 <p className="text-xs text-slate-500">
                   Choose a verified farmer Google Account to access localized weather, mandi rates, and disease diagnoses.

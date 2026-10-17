@@ -1,4 +1,4 @@
-# KrishiSetu AI - Team Git Workflow & Branching Strategy
+# AgroSaathi - Team Git Workflow & Branching Strategy
 
 ## 1. Branch Strategy
 

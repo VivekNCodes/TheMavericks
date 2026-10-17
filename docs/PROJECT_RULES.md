@@ -1,4 +1,4 @@
-# KrishiSetu AI - Team Development Rules & Boundaries
+# AgroSaathi - Team Development Rules & Boundaries
 
 ## 1. Golden Rules of Collaboration
 

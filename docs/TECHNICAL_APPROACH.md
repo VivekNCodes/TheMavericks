@@ -1,7 +1,7 @@
-# KrishiSetu AI (कृषि सेतु) - Full Technical Approach & Infrastructure Specification
+# AgroSaathi (एग्रोसाथी) - Full Technical Approach & Infrastructure Specification
 
 > **Document Classification**: Non-Executable & Non-Deployable Technical Architecture Blueprint  
-> **Platform**: KrishiSetu AI (TheMavericks)  
+> **Platform**: AgroSaathi (TheMavericks)  
 > **Target Audience**: Solution Architects, Technical Evaluators, Agronomists, and Engineering Leads  
 > **Repository**: [https://github.com/VivekNCodes/TheMavericks.git](https://github.com/VivekNCodes/TheMavericks.git)  
 > **Last Updated**: October 2026  
@@ -10,13 +10,13 @@
 
 ## 1. Executive Technical Summary
 
-**KrishiSetu AI** is a modular, multi-tenant agricultural intelligence and digital commerce platform designed specifically for the Indian agricultural ecosystem. It bridges the critical divide between cutting-edge computational agronomy (meteorological modelling, soil hydrology, and visual pathology) and hyper-local farmer decision-making across disparate Indian states, agro-climatic zones, and vernacular languages.
+**AgroSaathi** is a modular, multi-tenant agricultural intelligence and digital commerce platform designed specifically for the Indian agricultural ecosystem. It bridges the critical divide between cutting-edge computational agronomy (meteorological modelling, soil hydrology, and visual pathology) and hyper-local farmer decision-making across disparate Indian states, agro-climatic zones, and vernacular languages.
 
 The platform is engineered as a **Modern Modular Monolith** on **Next.js 14 (App Router)**, **TypeScript 5 (Strict Mode)**, **Tailwind CSS**, and **Neon Serverless PostgreSQL (Prisma ORM)**. It integrates external computational APIs (Open-Meteo Weather models and Google Gemini 1.5 Flash LLM) through strictly sandboxed, authenticated server-side route handlers that enforce data honesty, PII redaction, and offline-first fallback guarantees.
 
 ```
 +----------------------------------------------------------------------------------------------------+
-|                                    KRISHISETU AI ECOSYSTEM                                        |
+|                                      AGROSATHI ECOSYSTEM                                           |
 +----------------------------------------------------------------------------------------------------+
 |   Farmer Inputs        | Multilingual UI (EN, HI, MR, PA) | Responsive PWA / Mobile Browser        |
 +------------------------+----------------------------------+----------------------------------------+
@@ -149,7 +149,7 @@ The UI is styled using custom semantic color palettes defined in [`tailwind.conf
 
 ## 6. Multilingual & Localization Architecture (i18n)
 
-India's farming demographic spans varied linguistic backgrounds. KrishiSetu AI avoids third-party translation widgets that require heavy JavaScript runtimes or break on offline connections.
+India's farming demographic spans varied linguistic backgrounds. AgroSaathi avoids third-party translation widgets that require heavy JavaScript runtimes or break on offline connections.
 
 ```
                                 [Farmer User]
@@ -180,7 +180,7 @@ India's farming demographic spans varied linguistic backgrounds. KrishiSetu AI a
 
 ## 7. Deep Dive: Architectural Modules
 
-### 7.1. Module 1: KrishiSetu AI Sahayak (Multilingual Conversational Chatbot)
+### 7.1. Module 1: AgroSaathi AI Sahayak (Multilingual Conversational Chatbot)
 The conversational chatbot acts as an explanatory agricultural advisor rather than an authoritative dispenser of chemical toxins.
 
 ```mermaid
@@ -392,7 +392,7 @@ erDiagram
 
 ## 11. Offline-First Resilience & Graceful Degradation Matrix
 
-| Failure Mode | Standard Industry Failure | KrishiSetu AI Resilient Response |
+| Failure Mode | Standard Industry Failure | AgroSaathi Resilient Response |
 |---|---|---|
 | **`GEMINI_API_KEY` Absent or Depleted** | 500 Internal Server Error / Crashed UI | Switches automatically to `mode: "knowledge-base"` using the local ICAR agronomic database. |
 | **No Internet / Spotty Rural 3G** | Blank screen / Fetch Error | Client `localStorage` hydrates previously calculated crop plans, saved mandis, and conversation history. |
@@ -426,13 +426,13 @@ Vercel Edge & Serverless Deployment
 ### Environment Configuration Checklist:
 ```env
 # Core Application
-NEXT_PUBLIC_APP_NAME="KrishiSetu AI"
+NEXT_PUBLIC_APP_NAME="AgroSaathi"
 NEXT_PUBLIC_APP_DESCRIPTION="Smart Farming, Brighter Futures"
 NEXT_PUBLIC_APP_URL="https://the-mavericks.vercel.app"
 
 # Database (Neon Serverless PostgreSQL)
-DATABASE_URL="postgresql://user:pass@ep-endpoint-pooler.us-east-2.aws.neon.tech/krishisetu?sslmode=require&pgbouncer=true"
-DIRECT_URL="postgresql://user:pass@ep-endpoint.us-east-2.aws.neon.tech/krishisetu?sslmode=require"
+DATABASE_URL="postgresql://user:pass@ep-endpoint-pooler.us-east-2.aws.neon.tech/agrosaathi?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgresql://user:pass@ep-endpoint.us-east-2.aws.neon.tech/agrosaathi?sslmode=require"
 
 # Agricultural AI Assistant (Google AI Studio Free Tier)
 GEMINI_API_KEY="AIzaSy..."
@@ -463,4 +463,4 @@ node -e "require('http').get('http://localhost:3000/api/health', (r) => console.
 
 ## 14. Conclusion & Architectural Readiness
 
-The technical infrastructure of **KrishiSetu AI** establishes an enterprise-grade, highly resilient platform tailored to Indian agriculture. By combining the agility of Next.js 14 Server Components with scientific FAO-56 agrometeorology, Google Gemini 1.5 Flash conversational grounding, and strict offline-first resilience, the platform provides farmers with a dependable, cost-free digital partner for sustainable agricultural prosperity.
+The technical infrastructure of **AgroSaathi** establishes an enterprise-grade, highly resilient platform tailored to Indian agriculture. By combining the agility of Next.js 14 Server Components with scientific FAO-56 agrometeorology, Google Gemini 1.5 Flash conversational grounding, and strict offline-first resilience, the platform provides farmers with a dependable, cost-free digital partner for sustainable agricultural prosperity.

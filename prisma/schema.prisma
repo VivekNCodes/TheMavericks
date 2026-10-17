@@ -1,4 +1,4 @@
-// KrishiSetu AI - Prisma Schema
+// AgroSaathi - Prisma Schema
 // Database Engine: Neon Serverless PostgreSQL
 
 datasource db {

@@ -26,7 +26,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     // Read persisted language preference from localStorage
-    const saved = localStorage.getItem("krishisetu_language") as SupportedLanguage;
+    const saved = (localStorage.getItem("agrosaathi_language") ||
+      localStorage.getItem("krishisetu_language")) as SupportedLanguage;
     if (saved && translations[saved]) {
       setLanguageState(saved);
     }
@@ -35,7 +36,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
     if (typeof window !== "undefined") {
-      localStorage.setItem("krishisetu_language", lang);
+      localStorage.setItem("agrosaathi_language", lang);
     }
   };
 

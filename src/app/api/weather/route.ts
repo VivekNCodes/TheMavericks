@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     } else {
       res = await fetch(openMeteoUrl, {
         signal: controller.signal,
-        headers: { "User-Agent": "KrishiSetu-AI/1.0" },
+        headers: { "User-Agent": "AgroSaathi/1.0" },
         next: { revalidate: 600 },
       });
     }

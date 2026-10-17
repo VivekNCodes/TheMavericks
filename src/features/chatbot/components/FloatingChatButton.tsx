@@ -56,7 +56,7 @@ export const FloatingChatButton: React.FC = () => {
           {/* Pulse pill badge */}
           <button
             onClick={() => setIsOpen(true)}
-            aria-label="Open KrishiSetu AI Assistant"
+            aria-label="Open AgroSaathi AI Assistant"
             className="group flex items-center gap-2.5 bg-gradient-to-r from-krishi-600 to-krishi-700 hover:from-krishi-700 hover:to-krishi-800 text-white pl-4 pr-5 py-3 rounded-full shadow-lg shadow-krishi-900/20 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 border border-krishi-500/30"
           >
             <div className="relative flex items-center justify-center">

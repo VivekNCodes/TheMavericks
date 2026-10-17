@@ -1,4 +1,4 @@
-# KrishiSetu AI (कृषि सेतु) - Project Overview
+# AgroSaathi (एग्रोसाथी) - Project Overview
 
 > **Smart Farming, Brighter Futures**  
 > An integrated agricultural intelligence and commerce platform built to empower Indian farmers with real-time agronomic insights, price discovery, and direct market access.
@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary
 
-KrishiSetu AI bridges the critical gaps between agricultural technology, localized agronomy, and market economics. By unifying four essential pillars into a cohesive, farmer-friendly dashboard, the platform enables farmers to make informed decisions that enhance crop health, conserve water resources, and optimize market profits.
+AgroSaathi bridges the critical gaps between agricultural technology, localized agronomy, and market economics. By unifying four essential pillars into a cohesive, farmer-friendly dashboard, the platform enables farmers to make informed decisions that enhance crop health, conserve water resources, and optimize market profits.
 
 The platform is designed around four specialized modules:
 1. **Crop Disease Detection**: Instant AI-assisted visual diagnosis of leaf afflictions with localized treatment guidance.
@@ -19,7 +19,7 @@ The platform is designed around four specialized modules:
 
 ## 2. Core Value Propositions
 
-| Dimension | Challenge Faced by Farmers | KrishiSetu AI Solution |
+| Dimension | Challenge Faced by Farmers | AgroSaathi Solution |
 |---|---|---|
 | **Crop Health** | Delayed diagnosis of fungal/bacterial blight leading to crop loss | Instant on-device/cloud photo analysis with confidence scoring and treatment protocols |
 | **Market Rates** | Information asymmetry; middleman exploitation at physical mandis | Real-time modal prices and trends across neighboring mandis (Jaipur, Sanganer, Phagi, Chomu) |

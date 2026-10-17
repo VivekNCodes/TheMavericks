@@ -34,7 +34,7 @@ export function detectIndianLanguage(
 
 /**
  * Deterministic fallback generator when GEMINI_API_KEY is not set or network fails.
- * Synthesizes grounded, accurate answers from KrishiSetu's validated agricultural data.
+ * Synthesizes grounded, accurate answers from AgroSaathi's validated agricultural data.
  */
 function generateDeterministicFallbackReply(
   userQuery: string,
@@ -44,7 +44,7 @@ function generateDeterministicFallbackReply(
   const queryLower = userQuery.toLowerCase();
 
   if (lang === "hi") {
-    return `नमस्ते किसान साथी! KrishiSetu AI के सत्यापित कृषि ज्ञानकोष के अनुसार:
+    return `नमस्ते किसान साथी! AgroSaathi (एग्रोसाथी) के सत्यापित कृषि ज्ञानकोष के अनुसार:
 
 ${groundingText.split("\n").slice(0, 8).join("\n")}
 
@@ -52,7 +52,7 @@ ${groundingText.split("\n").slice(0, 8).join("\n")}
   }
 
   if (lang === "mr") {
-    return `नमस्कार शेतकरी मित्रा! कृषीसेतू AI च्या प्रमाणित शेती ज्ञानकोशानुसार:
+    return `नमस्कार शेतकरी मित्रा! AgroSaathi (ॲग्रोसाथी) च्या प्रमाणित शेती ज्ञानकोशानुसार:
 
 ${groundingText.split("\n").slice(0, 8).join("\n")}
 
@@ -60,14 +60,14 @@ ${groundingText.split("\n").slice(0, 8).join("\n")}
   }
 
   if (lang === "pa") {
-    return `ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ! ਕ੍ਰਿਸ਼ੀਸੇਤੂ ਦੇ ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਗਿਆਨ ਅਨੁਸਾਰ:
+    return `ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ! AgroSaathi (ਐਗਰੋਸਾਥੀ) ਦੇ ਪ੍ਰਮਾਣਿਤ ਖੇਤੀਬਾੜੀ ਗਿਆਨ ਅਨੁਸਾਰ:
 
 ${groundingText.split("\n").slice(0, 8).join("\n")}
 
 ਸਲਾਹ: ਇਹ ਜਾਣਕਾਰੀ ICAR ਅਤੇ ਮੌਸਮ ਵਿਭਾਗ ਦੇ ਤੱਥਾਂ 'ਤੇ ਅਧਾਰਿਤ ਹੈ। ਖ਼ਾਦ ਜਾਂ ਦਵਾਈ ਦੀ ਸਹੀ ਮਾਤਰਾ ਲਈ ਆਪਣੇ ਨੇੜਲੇ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ (KVK) ਨਾਲ ਸੰਪਰਕ ਕਰੋ।`;
   }
 
-  return `Hello Farmer! Based on KrishiSetu AI's verified agronomic knowledge base:
+  return `Hello Farmer! Based on AgroSaathi's verified agronomic knowledge base:
 
 ${groundingText.split("\n").slice(0, 8).join("\n")}
 
@@ -88,18 +88,18 @@ function buildSystemInstructions(
     pa: "Punjabi (ਪੰਜਾਬੀ)",
   };
 
-  return `You are "KrishiSetu AI Sahayak" (कृषिसेतु सहायक), an empathetic, knowledgeable, and humble agricultural AI assistant for Indian farmers.
+  return `You are "AgroSaathi AI Sahayak" (एग्रोसाथी सहायक), an empathetic, knowledgeable, and humble agricultural AI assistant for Indian farmers.
 
 CORE OPERATIONAL RULES:
 1. Explanatory Assistant Role: You are an explanatory advisor, NOT an authoritative agronomist. Always acknowledge uncertainty and identify when field conditions require on-site inspection.
 2. Zero Fabrication Policy: NEVER invent or hallucinate pesticide doses, unapproved chemical brands, false weather numbers, or fake fertilizer quantities. If you do not have exact verified data, clearly say so.
-3. Grounding Priority: Prioritize and ground your answers in the provided verified KrishiSetu agronomic knowledge base below.
+3. Grounding Priority: Prioritize and ground your answers in the provided verified AgroSaathi agronomic knowledge base below.
 4. Integrated Pest Management (IPM): Always promote cultural sanitation, resistant varieties, bio-inoculants (Trichoderma, Neem formulations), and balanced nutrition before mentioning synthetic chemicals.
 5. Language & Tone: Respond directly in ${languageNames[targetLanguage]}. Use warm, respectful, practical language that Indian farmers understand. If the user writes in Hindi, Marathi, or Punjabi, reply in that script natively.
 6. Safety Disclaimer: Whenever advising on plant diseases, severe pests, or chemical usage, include a brief recommendation to verify with their local Krishi Vigyan Kendra (KVK) or State Agricultural University.
 
 ==============================
-GROUNDED KRISHISETU KNOWLEDGE BASE CONTEXT:
+GROUNDED AGROSAATHI KNOWLEDGE BASE CONTEXT:
 ${groundingContext}
 ==============================`;
 }

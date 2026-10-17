@@ -60,10 +60,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Initialize conversation with multilingual greeting
   useEffect(() => {
     const greetings: Record<SupportedLanguage, string> = {
-      en: "Hello! I am KrishiSetu AI Sahayak, your personal agricultural assistant. Ask me anything about crop diseases, irrigation scheduling, soil fertility, weather risks, or market practices.",
-      hi: "नमस्ते किसान साथी! मैं कृषिसेतु एआई सहायक (कृषि मित्र) हूँ। आप मुझसे फसल रोगों की पहचान, सिंचाई का समय, मिट्टी की जांच, मौसम चेतावनी या मंडी भाव से जुड़े प्रश्न पूछ सकते हैं।",
-      mr: "नमस्कार शेतकरी बंधू! मी कृषीसेतू एआय सहाय्यक आहे. पीक रोग, सिंचन नियोजन, खत व्यवस्थापन किंवा हवामानाबद्दल आपले प्रश्न विचारा.",
-      pa: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ! ਮੈਂ ਕ੍ਰਿਸ਼ੀਸੇਤੂ AI ਸਹਾਇਕ ਹਾਂ। ਤੁਸੀਂ ਫ਼ਸਲਾਂ ਦੇ ਰੋਗਾਂ, ਸਿੰਚਾਈ ਦੇ ਸਮੇਂ, ਮਿੱਟੀ ਦੀ ਪਰਖ ਜਾਂ ਮੌਸਮ ਬਾਰੇ ਕੋਈ ਵੀ ਸਵਾਲ ਪੁੱਛ ਸਕਦੇ ਹੋ।",
+      en: "Hello! I am AgroSaathi AI Sahayak, your personal agricultural assistant. Ask me anything about crop diseases, irrigation scheduling, soil fertility, weather risks, or market practices.",
+      hi: "नमस्ते किसान साथी! मैं एग्रोसाथी एआई सहायक (कृषि मित्र) हूँ। आप मुझसे फसल रोगों की पहचान, सिंचाई का समय, मिट्टी की जांच, मौसम चेतावनी या मंडी भाव से जुड़े प्रश्न पूछ सकते हैं।",
+      mr: "नमस्कार शेतकरी बंधू! मी ॲग्रोसाथी एआय सहाय्यक आहे. पीक रोग, सिंचन नियोजन, खत व्यवस्थापन किंवा हवामानाबद्दल आपले प्रश्न विचारा.",
+      pa: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਕਿਸਾਨ ਵੀਰੋ! ਮੈਂ ਐਗਰੋਸਾਥੀ AI ਸਹਾਇਕ ਹਾਂ। ਤੁਸੀਂ ਫ਼ਸਲਾਂ ਦੇ ਰੋਗਾਂ, ਸਿੰਚਾਈ ਦੇ ਸਮੇਂ, ਮਿੱਟੀ ਦੀ ਪਰਖ ਜਾਂ ਮੌਸਮ ਬਾਰੇ ਕੋਈ ਵੀ ਸਵਾਲ ਪੁੱਛ ਸਕਦੇ ਹੋ।",
     };
 
     setMessages([
@@ -144,7 +144,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           try {
             const updatedList = [...newHistory, assistantMessage];
             localStorage.setItem(
-              `krishisetu_chat_${sessionId}`,
+              `agrosaathi_chat_${sessionId}`,
               JSON.stringify(updatedList)
             );
           } catch {
@@ -234,7 +234,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-sm tracking-tight text-white">
-                KrishiSetu AI Sahayak
+                AgroSaathi AI Sahayak
               </span>
               <Badge
                 variant="green"
@@ -383,7 +383,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <div className="p-3.5 bg-white border border-slate-200/90 rounded-2xl rounded-tl-xs shadow-xs text-xs text-slate-600 flex items-center gap-2.5">
               <Loader2 className="h-4 w-4 animate-spin text-krishi-600" />
               <span className="font-medium animate-pulse">
-                Consulting KrishiSetu agricultural knowledge base...
+                Consulting AgroSaathi agricultural knowledge base...
               </span>
             </div>
           </div>

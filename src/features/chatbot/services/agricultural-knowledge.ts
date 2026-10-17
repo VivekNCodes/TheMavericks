@@ -135,7 +135,7 @@ const DISEASE_DATABASE = [
 ];
 
 /**
- * Retrieves grounded agricultural context from KrishiSetu's verified data modules.
+ * Retrieves grounded agricultural context from AgroSaathi's verified data modules.
  */
 export async function retrieveAgriculturalGrounding(
   query: string,
@@ -248,7 +248,7 @@ ${weatherOutlook.risks.map((r) => `  * ${r.title} (${r.severity.toUpperCase()}):
   if (contextParts.length === 0) {
     contextParts.push(
       `[GENERAL INDIAN AGRICULTURAL KNOWLEDGE BASE]
-- KrishiSetu AI contains verified agronomic models for 10 crops (Wheat, Paddy, Tomato, Potato, Mustard, Cotton, Chickpea, Maize, Soybean, Onion).
+- AgroSaathi contains verified agronomic models for 10 crops (Wheat, Paddy, Tomato, Potato, Mustard, Cotton, Chickpea, Maize, Soybean, Onion).
 - Principles: Always emphasize Integrated Pest Management (IPM), soil testing through the Soil Health Card scheme, seed treatment with bio-inoculants (Trichoderma, Rhizobium, PSB), water conservation through Drip/Sprinkler systems, and local KVK advisory verification.`
     );
     citations.push("ICAR General Agronomy Guidelines");
