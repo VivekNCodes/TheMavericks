@@ -1,0 +1,247 @@
+// KrishiSetu AI - Prisma Schema
+// Database Engine: Neon Serverless PostgreSQL
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------------------------
+// User & Farmer Profiles
+// ------------------------------------------------------
+enum UserRole {
+  FARMER
+  BUYER
+  AGRONOMIST
+  ADMIN
+}
+
+model User {
+  id           String        @id @default(cuid())
+  phone        String        @unique
+  fullName     String
+  role         UserRole      @default(FARMER)
+  state        String        @default("Rajasthan")
+  district     String        @default("Jaipur")
+  village      String?
+  avatarUrl    String?
+  isVerified   Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  crops        CropProfile[]
+  listings     MarketplaceListing[]
+  inquiries    MarketplaceInquiry[]
+  cropPlans    CropPlan[]
+  chatSessions ChatSession[]
+
+  @@map("users")
+}
+
+// ------------------------------------------------------
+// Crop Profiles (Dashboard: "Your Crops")
+// ------------------------------------------------------
+enum GrowthStage {
+  SOWING
+  VEGETATIVE
+  FLOWERING
+  FRUIT_DEVELOPMENT
+  GRAIN_FILLING
+  MATURITY
+  HARVESTED
+}
+
+model CropProfile {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cropName      String         // e.g. "Tomato", "Wheat", "Chili"
+  variety       String?        // e.g. "Abhinav F1", "HD-2967"
+  acreage       Float          // e.g. 1.2
+  growthStage   GrowthStage    @default(VEGETATIVE)
+  sowingDate    DateTime?
+  fieldLocation String?        // e.g. "Plot 2 - Jaipur North"
+  imageUrl      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  diseaseLogs   DiseaseLog[]
+  irrigationLogs IrrigationLog[]
+
+  @@map("crop_profiles")
+}
+
+// ------------------------------------------------------
+// Module 1: Crop Disease Detection
+// ------------------------------------------------------
+enum SeverityLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
+
+model DiseaseLog {
+  id               String         @id @default(cuid())
+  cropProfileId    String?
+  cropProfile      CropProfile?   @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
+  imageUrl         String
+  detectedDisease  String         // e.g. "Tomato - Early Blight"
+  scientificName   String?        // e.g. "Alternaria solani"
+  confidence       Float          // 0.0 - 1.0 (e.g. 0.92)
+  severity         SeverityLevel  @default(MODERATE)
+  symptoms         String?
+  treatmentSummary String?
+  chemicalRemedy   String?        // e.g. "Mancozeb 75 WP"
+  organicRemedy    String?        // e.g. "Neem oil spray (3ml/L)"
+  culturalControl  String?        // e.g. "Remove bottom leaves, improve airflow"
+  createdAt        DateTime       @default(now())
+
+  @@map("disease_logs")
+}
+
+// ------------------------------------------------------
+// Module 2: Mandi Price Intelligence
+// ------------------------------------------------------
+model MandiPrice {
+  id             String    @id @default(cuid())
+  mandiName      String    // e.g. "Jaipur Mandi"
+  state          String    @default("Rajasthan")
+  district       String    @default("Jaipur")
+  cropName       String    // e.g. "Tomato"
+  variety        String?
+  grade          String?   @default("FAQ")
+  minPrice       Float     // in INR per Quintal
+  modalPrice     Float     // in INR per Quintal
+  maxPrice       Float     // in INR per Quintal
+  arrivalsTonnes Float?    // e.g. 1250
+  trendPercent   Float?    // e.g. +12.0
+  recordDate     DateTime  @default(now())
+
+  @@index([mandiName, cropName, recordDate])
+  @@map("mandi_prices")
+}
+
+// ------------------------------------------------------
+// Module 3: Smart Irrigation Advisor
+// ------------------------------------------------------
+enum IrrigationUrgency {
+  NO_ACTION_NEEDED
+  LOW
+  MODERATE
+  URGENT
+}
+
+model IrrigationLog {
+  id                 String             @id @default(cuid())
+  cropProfileId      String?
+  cropProfile        CropProfile?       @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
+  soilType           String             // e.g. "Loamy", "Clay", "Sandy"
+  growthStage        GrowthStage
+  lastIrrigatedDate  DateTime?
+  recommendationText String             // e.g. "Consider irrigation in next 2-3 days"
+  urgency            IrrigationUrgency  @default(MODERATE)
+  soilMoistureEst    Float?             // e.g. 42%
+  weatherJson        Json?
+  createdAt          DateTime           @default(now())
+
+  @@map("irrigation_logs")
+}
+
+// ------------------------------------------------------
+// Module 4: Farmer Marketplace
+// ------------------------------------------------------
+enum ListingStatus {
+  ACTIVE
+  UNDER_NEGOTIATION
+  SOLD
+  EXPIRED
+}
+
+model MarketplaceListing {
+  id              String               @id @default(cuid())
+  userId          String
+  farmer          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cropName        String               // e.g. "Tomato"
+  title           String               // e.g. "Fresh Tomatoes - High Quality"
+  description     String?
+  variety         String?
+  quantityKg      Float                // e.g. 580
+  pricePerQuintal Float                // e.g. 1800
+  grade           String               @default("A Grade")
+  location        String               @default("Jaipur, Rajasthan")
+  harvestDate     DateTime?
+  status          ListingStatus        @default(ACTIVE)
+  images          String[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  inquiries       MarketplaceInquiry[]
+
+  @@map("marketplace_listings")
+}
+
+model MarketplaceInquiry {
+  id                   String             @id @default(cuid())
+  listingId            String
+  listing              MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId              String?
+  buyer                User?              @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerName            String             // e.g. "GreenFresh Traders"
+  buyerOrg             String?            // e.g. "AgriMart Pvt. Ltd."
+  interestedQuantityKg Float              // e.g. 500
+  proposedPriceQuintal Float?
+  message              String?
+  status               String             @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  createdAt            DateTime           @default(now())
+
+  @@map("marketplace_inquiries")
+}
+
+// ------------------------------------------------------
+// Module 5: Crop Growing Planner
+// ------------------------------------------------------
+model CropPlan {
+  id               String    @id @default(cuid())
+  userId           String?
+  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  farmerName       String    @default("Guest Farmer")
+  cropName         String
+  cropId           String
+  locationName     String
+  sowingDate       DateTime
+  landArea         Float
+  areaUnit         String    @default("acre")
+  soilType         String
+  irrigationMethod String
+  planData         Json
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("crop_plans")
+}
+
+// ------------------------------------------------------
+// Module 6: AI Chat Assistant Sessions
+// ------------------------------------------------------
+model ChatSession {
+  id         String    @id @default(cuid())
+  userId     String?
+  farmerName String    @default("Guest Farmer")
+  title      String    @default("New Farming Chat")
+  language   String    @default("en")
+  messages   Json
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("chat_sessions")
+}
