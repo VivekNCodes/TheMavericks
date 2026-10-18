@@ -122,11 +122,13 @@ export async function GET(request: NextRequest) {
   try {
     const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,et0_fao_evapotranspiration&timezone=${encodeURIComponent(timezone)}`;
 
+    const apiKey = process.env.OPENWEATHER_API_KEY;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+    let res: Response;
     if (apiKey) {
-      const openWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric`;
+      const openWeatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
       res = await fetch(openWeatherUrl, { signal: controller.signal, next: { revalidate: 600 } });
     } else {
       res = await fetch(openMeteoUrl, {
