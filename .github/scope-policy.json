@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgroSaathi Scope Enforcement Policy",
+  "description": "Defines authorized file path patterns for each module branch in the 5-member team workflow.",
+  "version": "1.0.0",
+  "modules": {
+    "mandi-prices": {
+      "owner": "Member 2 (Agronomic Market Specialist)",
+      "branchPattern": "^feature/mandi-prices-.*",
+      "allowedPaths": [
+        "src/features/mandi-prices/**",
+        "src/app/mandi-prices/**"
+      ]
+    },
+    "irrigation": {
+      "owner": "Member 3 (IoT & Irrigation Specialist)",
+      "branchPattern": "^feature/irrigation-.*",
+      "allowedPaths": [
+        "src/features/irrigation/**",
+        "src/app/irrigation/**"
+      ]
+    },
+    "marketplace": {
+      "owner": "Member 4 (Agri-Commerce Specialist)",
+      "branchPattern": "^feature/marketplace-.*",
+      "allowedPaths": [
+        "src/features/marketplace/**",
+        "src/app/marketplace/**"
+      ]
+    },
+    "crop-disease": {
+      "owner": "Integration Lead (@VivekNCodes)",
+      "branchPattern": "^feature/crop-disease-.*",
+      "allowedPaths": [
+        "src/features/crop-disease/**",
+        "src/app/crop-disease/**",
+        "src/app/api/crop-disease/**"
+      ]
+    },
+    "crop-planner": {
+      "owner": "Member 5 / Agronomic Planning",
+      "branchPattern": "^feature/crop-planner-.*",
+      "allowedPaths": [
+        "src/features/crop-planner/**",
+        "src/app/crop-planner/**",
+        "src/app/api/crop-planner/**",
+        "src/app/dashboard/crop-planner/**"
+      ]
+    },
+    "chatbot": {
+      "owner": "Integration Lead / AI Sahayak",
+      "branchPattern": "^feature/chatbot-.*",
+      "allowedPaths": [
+        "src/features/chatbot/**",
+        "src/app/assistant/**",
+        "src/app/chat/**",
+        "src/app/api/assistant/**"
+      ]
+    },
+    "docs": {
+      "owner": "All Contributors (Documentation Only)",
+      "branchPattern": "^docs/.*",
+      "allowedPaths": [
+        "docs/**",
+        "*.md"
+      ]
+    },
+    "core": {
+      "owner": "Integration Lead (@VivekNCodes)",
+      "branchPattern": "^(feature/core-.*|lead/.*)",
+      "allowedPaths": [
+        "**"
+      ]
+    }
+  }
+}

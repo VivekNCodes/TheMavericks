@@ -42,3 +42,6 @@ next-env.d.ts
 Plant-Disease-Classification/
 .venv/
 __pycache__/
+
+# Local JSON store fallback
+.data/

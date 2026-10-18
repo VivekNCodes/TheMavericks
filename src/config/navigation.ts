@@ -65,8 +65,8 @@ export const primaryNavItems: NavItem[] = [
 export const secondaryNavItems: NavItem[] = [
   {
     id: "settings",
-    label: "Settings",
-    href: "/#settings",
+    label: "Farmer Profile",
+    href: "/profile",
     icon: Settings,
   },
   {
