@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="mustardGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="50%" stop-color="#EAB308"/>
+      <stop offset="100%" stop-color="#854D0E"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="#FEFCE8"/>
+  <!-- Pods stem -->
+  <path d="M60 105 L60 25" stroke="#15803D" stroke-width="3" stroke-linecap="round"/>
+  <!-- Mustard Pods -->
+  <path d="M60 40 Q40 30 30 20" stroke="#15803D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M60 55 Q80 45 90 35" stroke="#15803D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M60 70 Q35 65 25 55" stroke="#15803D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Yellow Blossom Flowers -->
+  <circle cx="60" cy="20" r="12" fill="url(#mustardGrad)" filter="drop-shadow(0 4px 8px rgba(234,179,8,0.3))"/>
+  <circle cx="45" cy="30" r="8" fill="url(#mustardGrad)"/>
+  <circle cx="75" cy="30" r="8" fill="url(#mustardGrad)"/>
+  <!-- Small seeds at base -->
+  <circle cx="50" cy="85" r="4" fill="#713F12"/>
+  <circle cx="62" cy="90" r="4" fill="#854D0E"/>
+  <circle cx="70" cy="84" r="3.5" fill="#713F12"/>
+</svg>

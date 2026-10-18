@@ -37,6 +37,7 @@ model User {
   crops        CropProfile[]
   listings     MarketplaceListing[]
   inquiries    MarketplaceInquiry[]
+  orders       MarketplaceOrder[]
   cropPlans    CropPlan[]
   chatSessions ChatSession[]
 
@@ -158,31 +159,54 @@ model IrrigationLog {
 // ------------------------------------------------------
 enum ListingStatus {
   ACTIVE
-  UNDER_NEGOTIATION
-  SOLD
-  EXPIRED
+  PAUSED
+  SOLD_OUT
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
 }
 
 model MarketplaceListing {
-  id              String               @id @default(cuid())
-  userId          String
-  farmer          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cropName        String               // e.g. "Tomato"
-  title           String               // e.g. "Fresh Tomatoes - High Quality"
-  description     String?
-  variety         String?
-  quantityKg      Float                // e.g. 580
-  pricePerQuintal Float                // e.g. 1800
-  grade           String               @default("A Grade")
-  location        String               @default("Jaipur, Rajasthan")
-  harvestDate     DateTime?
-  status          ListingStatus        @default(ACTIVE)
-  images          String[]
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  id                      String               @id @default(cuid())
+  userId                  String
+  farmer                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                   String               // e.g. "Fresh Tomatoes - High Quality"
+  cropName                String               // e.g. "Tomato"
+  category                String               @default("Vegetables") // Vegetables, Grains & Cereals, Fruits, Pulses, Spices, Oilseeds
+  variety                 String?
+  description             String?
+  unit                    String               @default("quintal") // kg, quintal, tonne
+  pricePerUnit            Float                // Price in INR per specified unit
+  totalStock              Float                // Total initial stock listed
+  availableStock          Float                // Remaining uncommitted stock
+  quantityKg              Float                // Total equivalent quantity in kg for cross-mandi comparison
+  pricePerQuintal         Float                // Normalized price per quintal for mandi comparison
+  grade                   String               @default("A Grade")
+  state                   String               @default("Rajasthan")
+  district                String               @default("Jaipur")
+  village                 String?
+  location                String               @default("Jaipur, Rajasthan")
+  pickupDelivery          String               @default("Farmgate Pickup & Seller Delivery Available")
+  sellerName              String               @default("Ramesh Kumar")
+  sellerPhone             String               @default("+91 98765 43210")
+  sellerWhatsapp          String               @default("+919876543210")
+  sellerEmail             String?
+  harvestDate             DateTime?
+  status                  ListingStatus        @default(ACTIVE)
+  images                  String[]
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
 
-  inquiries       MarketplaceInquiry[]
+  inquiries               MarketplaceInquiry[]
+  orders                  MarketplaceOrder[]
 
+  @@index([cropName, status, state, district])
   @@map("marketplace_listings")
 }
 
@@ -201,6 +225,32 @@ model MarketplaceInquiry {
   createdAt            DateTime           @default(now())
 
   @@map("marketplace_inquiries")
+}
+
+model MarketplaceOrder {
+  id                 String             @id @default(cuid())
+  listingId          String
+  listing            MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId            String?
+  buyer              User?              @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerName          String
+  buyerPhone         String
+  buyerWhatsapp      String
+  buyerEmail         String?
+  buyerAddress       String?
+  quantityRequested  Float
+  unit               String             @default("quintal")
+  unitPrice          Float
+  totalPrice         Float
+  deliveryPreference String             @default("Farmgate Pickup")
+  notes              String?
+  status             OrderStatus        @default(PENDING)
+  statusHistory      Json               // Array of { status, timestamp, actor, note }
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([listingId, status])
+  @@map("marketplace_orders")
 }
 
 // ------------------------------------------------------
