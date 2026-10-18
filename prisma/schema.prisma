@@ -111,21 +111,46 @@ model DiseaseLog {
 model MandiPrice {
   id             String    @id @default(cuid())
   mandiName      String    // e.g. "Jaipur Mandi"
-  state          String    @default("Rajasthan")
-  district       String    @default("Jaipur")
-  cropName       String    // e.g. "Tomato"
-  variety        String?
+  state          String    @default("Uttar Pradesh")
+  district       String    @default("Agra")
+  cropName       String    // e.g. "Potato", "Wheat"
+  variety        String?   @default("Common")
   grade          String?   @default("FAQ")
   minPrice       Float     // in INR per Quintal
   modalPrice     Float     // in INR per Quintal
   maxPrice       Float     // in INR per Quintal
+  priceUnit      String    @default("INR/Quintal")
   arrivalsTonnes Float?    // e.g. 1250
   trendPercent   Float?    // e.g. +12.0
-  recordDate     DateTime  @default(now())
+  source         String    @default("data.gov.in")
+  recordDate     DateTime  @default(now()) // official reporting date
+  recordHash     String?   @unique // deterministic hash for idempotent deduplication
+  fetchedAt      DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
+  @@index([state, district, cropName])
+  @@index([cropName, recordDate])
   @@index([mandiName, cropName, recordDate])
   @@map("mandi_prices")
 }
+
+model MandiSyncLog {
+  id              String    @id @default(cuid())
+  source          String    @default("data.gov.in")
+  status          String    // "SUCCESS" | "FAILED" | "PARTIAL"
+  recordsFetched  Int       @default(0)
+  recordsInserted Int       @default(0)
+  recordsUpdated  Int       @default(0)
+  message         String?
+  errorDetails    String?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([startedAt])
+  @@map("mandi_sync_logs")
+}
+
 
 // ------------------------------------------------------
 // Module 3: Smart Irrigation Advisor
