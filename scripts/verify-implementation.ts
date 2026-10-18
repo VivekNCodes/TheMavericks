@@ -175,6 +175,69 @@ Here is the **recommended** action for [Early Blight](https://agrosaathi.in):
   const cmdMute = detectVoiceCommand("stop speaking now");
   assert(cmdMute?.type === "stop_speech", "Recognized 'Stop speaking' command");
 
+  // -------------------------------------------------------------
+  // Test 6: Server Audio Transcription Endpoint Logic
+  // -------------------------------------------------------------
+  console.log("\n6. Testing Audio Transcription Endpoint Logic & Fallback...");
+  const { POST: transcribeHandler } = await import("../src/app/api/assistant/transcribe/route");
+  const { NextRequest } = await import("next/server");
+
+  // Subtest 6A: Missing audio payload returns 400
+  const emptyFormReq = new NextRequest("http://localhost:3000/api/assistant/transcribe", {
+    method: "POST",
+    body: new FormData(),
+  });
+  const resEmpty = await transcribeHandler(emptyFormReq);
+  const jsonEmpty = await resEmpty.json();
+  assert(resEmpty.status === 400, "Missing audio returns 400 Bad Request");
+  assert(jsonEmpty.error === "MISSING_AUDIO", "Returns MISSING_AUDIO error code");
+
+  // Subtest 6B: Empty audio buffer (< 400 bytes) returns empty string without error
+  const tinyBlob = new Blob([new Uint8Array(100)], { type: "audio/webm" });
+  const tinyForm = new FormData();
+  tinyForm.append("audio", tinyBlob, "empty.webm");
+  const tinyReq = new NextRequest("http://localhost:3000/api/assistant/transcribe", {
+    method: "POST",
+    body: tinyForm,
+  });
+  const resTiny = await transcribeHandler(tinyReq);
+  const jsonTiny = await resTiny.json();
+  assert(resTiny.status === 200, "Empty audio buffer returns 200 OK");
+  assert(jsonTiny.text === "", "Empty audio produces empty transcription safely");
+
+  // Subtest 6C: Oversized audio (> 12MB) rejected with 413
+  const fakeHugeBuffer = new Uint8Array(13 * 1024 * 1024);
+  const hugeBlob = new Blob([fakeHugeBuffer], { type: "audio/webm" });
+  const hugeForm = new FormData();
+  hugeForm.append("audio", hugeBlob, "huge.webm");
+  const hugeReq = new NextRequest("http://localhost:3000/api/assistant/transcribe", {
+    method: "POST",
+    body: hugeForm,
+  });
+  const resHuge = await transcribeHandler(hugeReq);
+  assert(resHuge.status === 413, "Oversized audio rejected with 413 Payload Too Large");
+
+  // Subtest 6D: Informative diagnostic when Gemini key not set in dev
+  const testAudioBlob = new Blob([new Uint8Array(2048)], { type: "audio/webm;codecs=opus" });
+  const testForm = new FormData();
+  testForm.append("audio", testAudioBlob, "voice.webm");
+  testForm.append("language", "hi");
+  const testReq = new NextRequest("http://localhost:3000/api/assistant/transcribe", {
+    method: "POST",
+    body: testForm,
+  });
+  const resVoice = await transcribeHandler(testReq);
+  const jsonVoice = await resVoice.json();
+  // Either successful transcription or clean diagnostic response without unhandled crash
+  assert(
+    resVoice.status === 200 || resVoice.status === 502,
+    "Audio transcription endpoint responds cleanly without server crashes"
+  );
+  assert(
+    jsonVoice.success === true || typeof jsonVoice.message === "string",
+    "Provides structured success text or actionable diagnostic message"
+  );
+
   // Clean up test accounts
   await deleteUserAccount(user1.id);
   await deleteUserAccount(user2.id);

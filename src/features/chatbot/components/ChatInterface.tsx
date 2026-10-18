@@ -70,9 +70,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Voice Assistant Hook
   const {
     isListening,
+    isProcessing,
     isSpeaking,
     isPaused,
     interimTranscript,
+    transcriptionStatus,
+    activeEngine,
     voiceSupported,
     ttsSupported,
     autoSpeak,
@@ -80,6 +83,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     clearError: clearVoiceError,
     startListening,
     stopListening,
+    cancelListening,
     speakText,
     stopSpeaking,
     pauseSpeaking,
@@ -533,19 +537,61 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           );
         })}
 
-        {/* Live Speech Recognition Interim Preview Bubble */}
-        {isListening && (
+        {/* Live Speech Recognition & AI Transcription Status Bubble */}
+        {(isListening || isProcessing) && (
           <div className="flex items-start gap-2.5 sm:gap-3 flex-row-reverse animate-in fade-in">
-            <div className="h-8 w-8 rounded-2xl bg-red-500 text-white flex items-center justify-center shrink-0 shadow-xs animate-pulse">
-              <Mic className="h-4 w-4" />
+            <div
+              className={`h-8 w-8 rounded-2xl text-white flex items-center justify-center shrink-0 shadow-xs ${
+                isProcessing ? "bg-amber-500 animate-spin" : "bg-red-500 animate-pulse"
+              }`}
+            >
+              {isProcessing ? <Loader2 className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </div>
-            <div className="max-w-[85%] rounded-2xl p-3.5 bg-red-50/80 border border-red-200 text-red-950 text-xs sm:text-sm rounded-tr-xs shadow-xs">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-red-700 uppercase tracking-wider mb-1">
-                <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
-                Listening to your voice...
+            <div
+              className={`max-w-[85%] rounded-2xl p-3.5 border text-xs sm:text-sm rounded-tr-xs shadow-xs ${
+                isProcessing
+                  ? "bg-amber-50 border-amber-200 text-amber-950"
+                  : "bg-red-50/80 border-red-200 text-red-950"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      isProcessing ? "bg-amber-500 animate-ping" : "bg-red-500 animate-ping"
+                    }`}
+                  />
+                  <span>
+                    {transcriptionStatus ||
+                      (isProcessing ? "Transcribing with AgroSaathi AI..." : "Listening to your voice...")}
+                  </span>
+                </div>
+                {isListening && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={stopListening}
+                      className="px-2 py-0.5 text-[10px] font-semibold bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                      title="Done speaking"
+                    >
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelListening}
+                      className="px-1.5 py-0.5 text-[10px] font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md transition-colors"
+                      title="Cancel recording"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
               <p className="italic text-slate-800">
-                {interimTranscript || "Speak your question now (e.g. 'How is my wheat crop doing?')..."}
+                {interimTranscript ||
+                  (isProcessing
+                    ? "Converting voice to text..."
+                    : "Speak your question now (e.g. 'How is my wheat crop doing?')...")}
               </p>
             </div>
           </div>
@@ -598,7 +644,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isListening
+              isProcessing
+                ? "Transcribing your voice..."
+                : isListening
                 ? "Listening... you can speak or type..."
                 : language === "hi"
                 ? "बोलकर या लिखकर पूछें (जैसे: मेरी गेहूं की फसल कैसी है?)..."
@@ -617,21 +665,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Microphone Button */}
             <button
               type="button"
+              disabled={isProcessing}
               onClick={isListening ? stopListening : startListening}
               className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all shadow-sm ${
-                isListening
+                isProcessing
+                  ? "bg-amber-100 text-amber-800 border border-amber-300 cursor-wait"
+                  : isListening
                   ? "bg-red-500 text-white animate-pulse ring-4 ring-red-200"
                   : "bg-white hover:bg-emerald-50 text-slate-600 hover:text-krishi-700 border border-slate-200"
               }`}
               title={
-                !voiceSupported
+                isProcessing
+                  ? "Transcribing your voice with AgroSaathi AI..."
+                  : !voiceSupported
                   ? "Speech recognition is not supported in this browser"
                   : isListening
-                  ? "Stop voice recording"
+                  ? "Click to stop recording and transcribe"
                   : "Start voice recording (Speak in English or Hindi)"
               }
             >
-              {isListening ? (
+              {isProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin text-amber-700" />
+              ) : isListening ? (
                 <MicOff className="h-4 w-4" />
               ) : (
                 <Mic className="h-4 w-4" />
