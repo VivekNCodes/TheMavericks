@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Resolve backend URL (server-only environment variable)
-    const backendUrl = process.env.PLANT_DISEASE_API_URL || "http://127.0.0.1:8000";
+    const backendUrl = process.env.PLANT_DISEASE_API_URL || "http://127.0.0.1:53147";
     const predictEndpoint = `${backendUrl.replace(/\/+$/, "")}/predict`;
 
     // 4. Forward to FastAPI backend (with optional auth header for HTTPS tunnel)
