@@ -75,7 +75,7 @@ export function assessSoilSuitability(
   let isPhAssumed = false;
   let phStatus: SoilSuitabilityAssessment["phStatus"] = "optimal";
 
-  if (input.soilTest.ph !== undefined && input.soilTest.ph > 0) {
+  if (input.soilTest?.ph !== undefined && input.soilTest.ph > 0) {
     phValueUsed = input.soilTest.ph;
     isPhAssumed = false;
 
@@ -116,12 +116,12 @@ export function assessSoilSuitability(
   }
 
   // 3. Soil Nutrients Assessment
-  const isNutrientsAssumed = !input.soilTest.hasLabReport;
+  const isNutrientsAssumed = !input.soilTest?.hasLabReport;
   if (isNutrientsAssumed) {
     assumptions.push(
       "Laboratory N-P-K nutrient status not provided. Agronomic plan assumes medium fertility index under standard regional conditions."
     );
-  } else {
+  } else if (input.soilTest) {
     if (input.soilTest.nitrogen === "low") {
       recommendations.push("Soil test indicates Low Nitrogen. Increase basal Nitrogen application by 15-20%.");
     } else if (input.soilTest.nitrogen === "high") {
@@ -349,7 +349,7 @@ export function calculateNutrientPlan(
 ) {
   let { n, p, k } = crop.standardNpkPerHectare;
 
-  if (soilTest.hasLabReport) {
+  if (soilTest?.hasLabReport) {
     if (soilTest.nitrogen === "low") n = Math.round(n * 1.2);
     else if (soilTest.nitrogen === "high") n = Math.round(n * 0.8);
 

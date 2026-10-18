@@ -44,5 +44,10 @@ Plant-Disease-Classification/
 .venv/
 __pycache__/
 
+# Local data cache & dynamic uploads
+.data/
+public/uploads/marketplace/*
+!public/uploads/marketplace/.gitkeep
+!public/uploads/.gitkeep
 # Local JSON store fallback
 .data/

@@ -22,34 +22,35 @@ enum UserRole {
 }
 
 model User {
-  id                String        @id @default(cuid())
-  googleId          String?       @unique
-  email             String?       @unique
-  phone             String?       @unique
+  id                String    @id @default(cuid())
+  googleId          String?   @unique
+  email             String?   @unique
+  phone             String?   @unique
   fullName          String
   preferredName     String?
-  preferredLanguage String        @default("en")
-  role              UserRole      @default(FARMER)
-  state             String        @default("Rajasthan")
-  district          String        @default("Jaipur")
+  preferredLanguage String    @default("en")
+  role              UserRole  @default(FARMER)
+  state             String    @default("Rajasthan")
+  district          String    @default("Jaipur")
   village           String?
   farmSize          Float?
-  farmSizeUnit      String        @default("acre")
+  farmSizeUnit      String    @default("acre")
   soilType          String?
   irrigationMethod  String?
   farmingExperience Int?
   avatarUrl         String?
-  isVerified        Boolean       @default(false)
+  isVerified        Boolean   @default(false)
   lastLoginAt       DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  crops             CropProfile[]
-  listings          MarketplaceListing[]
-  inquiries         MarketplaceInquiry[]
-  cropPlans         CropPlan[]
-  chatSessions      ChatSession[]
-  diseaseLogs       DiseaseLog[]
+  crops        CropProfile[]
+  diseaseLogs  DiseaseLog[]
+  listings     MarketplaceListing[]
+  inquiries    MarketplaceInquiry[]
+  orders       MarketplaceOrder[]
+  cropPlans    CropPlan[]
+  chatSessions ChatSession[]
 
   @@map("users")
 }
@@ -68,26 +69,26 @@ enum GrowthStage {
 }
 
 model CropProfile {
-  id                  String         @id @default(cuid())
+  id                  String      @id @default(cuid())
   userId              String
-  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cropName            String         // e.g. "Tomato", "Wheat", "Chili"
-  variety             String?        // e.g. "Abhinav F1", "HD-2967"
-  acreage             Float          // e.g. 1.2
-  growthStage         GrowthStage    @default(VEGETATIVE)
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cropName            String // e.g. "Tomato", "Wheat", "Chili"
+  variety             String? // e.g. "Abhinav F1", "HD-2967"
+  acreage             Float // e.g. 1.2
+  growthStage         GrowthStage @default(VEGETATIVE)
   sowingDate          DateTime?
   expectedHarvestDate DateTime?
-  fieldLocation       String?        // e.g. "Plot 2 - Jaipur North"
+  fieldLocation       String? // e.g. "Plot 2 - Jaipur North"
   soilType            String?
   irrigationType      String?
   fertilizerNotes     String?
   notes               String?
   imageUrl            String?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
-  diseaseLogs         DiseaseLog[]
-  irrigationLogs      IrrigationLog[]
+  diseaseLogs    DiseaseLog[]
+  irrigationLogs IrrigationLog[]
 
   @@index([userId])
   @@map("crop_profiles")
@@ -104,22 +105,22 @@ enum SeverityLevel {
 }
 
 model DiseaseLog {
-  id               String         @id @default(cuid())
+  id               String        @id @default(cuid())
   userId           String?
-  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   cropProfileId    String?
-  cropProfile      CropProfile?   @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
+  cropProfile      CropProfile?  @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
   imageUrl         String
-  detectedDisease  String         // e.g. "Tomato - Early Blight"
-  scientificName   String?        // e.g. "Alternaria solani"
-  confidence       Float          // 0.0 - 1.0 (e.g. 0.92)
-  severity         SeverityLevel  @default(MODERATE)
+  detectedDisease  String // e.g. "Tomato - Early Blight"
+  scientificName   String? // e.g. "Alternaria solani"
+  confidence       Float // 0.0 - 1.0 (e.g. 0.92)
+  severity         SeverityLevel @default(MODERATE)
   symptoms         String?
   treatmentSummary String?
-  chemicalRemedy   String?        // e.g. "Mancozeb 75 WP"
-  organicRemedy    String?        // e.g. "Neem oil spray (3ml/L)"
-  culturalControl  String?        // e.g. "Remove bottom leaves, improve airflow"
-  createdAt        DateTime       @default(now())
+  chemicalRemedy   String? // e.g. "Mancozeb 75 WP"
+  organicRemedy    String? // e.g. "Neem oil spray (3ml/L)"
+  culturalControl  String? // e.g. "Remove bottom leaves, improve airflow"
+  createdAt        DateTime      @default(now())
 
   @@index([userId, createdAt])
   @@map("disease_logs")
@@ -129,25 +130,25 @@ model DiseaseLog {
 // Module 2: Mandi Price Intelligence
 // ------------------------------------------------------
 model MandiPrice {
-  id             String    @id @default(cuid())
-  mandiName      String    // e.g. "Jaipur Mandi"
-  state          String    @default("Uttar Pradesh")
-  district       String    @default("Agra")
-  cropName       String    // e.g. "Potato", "Wheat"
-  variety        String?   @default("Common")
-  grade          String?   @default("FAQ")
-  minPrice       Float     // in INR per Quintal
-  modalPrice     Float     // in INR per Quintal
-  maxPrice       Float     // in INR per Quintal
-  priceUnit      String    @default("INR/Quintal")
-  arrivalsTonnes Float?    // e.g. 1250
-  trendPercent   Float?    // e.g. +12.0
-  source         String    @default("data.gov.in")
-  recordDate     DateTime  @default(now()) // official reporting date
-  recordHash     String?   @unique // deterministic hash for idempotent deduplication
-  fetchedAt      DateTime  @default(now())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id             String   @id @default(cuid())
+  mandiName      String // e.g. "Jaipur Mandi"
+  state          String   @default("Uttar Pradesh")
+  district       String   @default("Agra")
+  cropName       String // e.g. "Potato", "Wheat"
+  variety        String?  @default("Common")
+  grade          String?  @default("FAQ")
+  minPrice       Float // in INR per Quintal
+  modalPrice     Float // in INR per Quintal
+  maxPrice       Float // in INR per Quintal
+  priceUnit      String   @default("INR/Quintal")
+  arrivalsTonnes Float? // e.g. 1250
+  trendPercent   Float? // e.g. +12.0
+  source         String   @default("data.gov.in")
+  recordDate     DateTime @default(now()) // official reporting date
+  recordHash     String?  @unique // deterministic hash for idempotent deduplication
+  fetchedAt      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([state, district, cropName])
   @@index([cropName, recordDate])
@@ -158,7 +159,7 @@ model MandiPrice {
 model MandiSyncLog {
   id              String    @id @default(cuid())
   source          String    @default("data.gov.in")
-  status          String    // "SUCCESS" | "FAILED" | "PARTIAL"
+  status          String // "SUCCESS" | "FAILED" | "PARTIAL"
   recordsFetched  Int       @default(0)
   recordsInserted Int       @default(0)
   recordsUpdated  Int       @default(0)
@@ -171,7 +172,6 @@ model MandiSyncLog {
   @@map("mandi_sync_logs")
 }
 
-
 // ------------------------------------------------------
 // Module 3: Smart Irrigation Advisor
 // ------------------------------------------------------
@@ -183,17 +183,17 @@ enum IrrigationUrgency {
 }
 
 model IrrigationLog {
-  id                 String             @id @default(cuid())
+  id                 String            @id @default(cuid())
   cropProfileId      String?
-  cropProfile        CropProfile?       @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
-  soilType           String             // e.g. "Loamy", "Clay", "Sandy"
+  cropProfile        CropProfile?      @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
+  soilType           String // e.g. "Loamy", "Clay", "Sandy"
   growthStage        GrowthStage
   lastIrrigatedDate  DateTime?
-  recommendationText String             // e.g. "Consider irrigation in next 2-3 days"
-  urgency            IrrigationUrgency  @default(MODERATE)
-  soilMoistureEst    Float?             // e.g. 42%
+  recommendationText String // e.g. "Consider irrigation in next 2-3 days"
+  urgency            IrrigationUrgency @default(MODERATE)
+  soilMoistureEst    Float? // e.g. 42%
   weatherJson        Json?
-  createdAt          DateTime           @default(now())
+  createdAt          DateTime          @default(now())
 
   @@map("irrigation_logs")
 }
@@ -203,31 +203,54 @@ model IrrigationLog {
 // ------------------------------------------------------
 enum ListingStatus {
   ACTIVE
-  UNDER_NEGOTIATION
-  SOLD
-  EXPIRED
+  PAUSED
+  SOLD_OUT
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
 }
 
 model MarketplaceListing {
-  id              String               @id @default(cuid())
+  id              String        @id @default(cuid())
   userId          String
-  farmer          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cropName        String               // e.g. "Tomato"
-  title           String               // e.g. "Fresh Tomatoes - High Quality"
-  description     String?
+  farmer          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String // e.g. "Fresh Tomatoes - High Quality"
+  cropName        String // e.g. "Tomato"
+  category        String        @default("Vegetables") // Vegetables, Grains & Cereals, Fruits, Pulses, Spices, Oilseeds
   variety         String?
-  quantityKg      Float                // e.g. 580
-  pricePerQuintal Float                // e.g. 1800
-  grade           String               @default("A Grade")
-  location        String               @default("Jaipur, Rajasthan")
+  description     String?
+  unit            String        @default("quintal") // kg, quintal, tonne
+  pricePerUnit    Float // Price in INR per specified unit
+  totalStock      Float // Total initial stock listed
+  availableStock  Float // Remaining uncommitted stock
+  quantityKg      Float // Total equivalent quantity in kg for cross-mandi comparison
+  pricePerQuintal Float // Normalized price per quintal for mandi comparison
+  grade           String        @default("A Grade")
+  state           String        @default("Rajasthan")
+  district        String        @default("Jaipur")
+  village         String?
+  location        String        @default("Jaipur, Rajasthan")
+  pickupDelivery  String        @default("Farmgate Pickup & Seller Delivery Available")
+  sellerName      String        @default("Ramesh Kumar")
+  sellerPhone     String        @default("+91 98765 43210")
+  sellerWhatsapp  String        @default("+919876543210")
+  sellerEmail     String?
   harvestDate     DateTime?
-  status          ListingStatus        @default(ACTIVE)
+  status          ListingStatus @default(ACTIVE)
   images          String[]
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  inquiries       MarketplaceInquiry[]
+  inquiries MarketplaceInquiry[]
+  orders    MarketplaceOrder[]
 
+  @@index([cropName, status, state, district])
   @@map("marketplace_listings")
 }
 
@@ -237,9 +260,9 @@ model MarketplaceInquiry {
   listing              MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyerId              String?
   buyer                User?              @relation(fields: [buyerId], references: [id], onDelete: SetNull)
-  buyerName            String             // e.g. "GreenFresh Traders"
-  buyerOrg             String?            // e.g. "AgriMart Pvt. Ltd."
-  interestedQuantityKg Float              // e.g. 500
+  buyerName            String // e.g. "GreenFresh Traders"
+  buyerOrg             String? // e.g. "AgriMart Pvt. Ltd."
+  interestedQuantityKg Float // e.g. 500
   proposedPriceQuintal Float?
   message              String?
   status               String             @default("PENDING") // PENDING, ACCEPTED, DECLINED
@@ -248,25 +271,51 @@ model MarketplaceInquiry {
   @@map("marketplace_inquiries")
 }
 
+model MarketplaceOrder {
+  id                 String             @id @default(cuid())
+  listingId          String
+  listing            MarketplaceListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId            String?
+  buyer              User?              @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  buyerName          String
+  buyerPhone         String
+  buyerWhatsapp      String
+  buyerEmail         String?
+  buyerAddress       String?
+  quantityRequested  Float
+  unit               String             @default("quintal")
+  unitPrice          Float
+  totalPrice         Float
+  deliveryPreference String             @default("Farmgate Pickup")
+  notes              String?
+  status             OrderStatus        @default(PENDING)
+  statusHistory      Json // Array of { status, timestamp, actor, note }
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([listingId, status])
+  @@map("marketplace_orders")
+}
+
 // ------------------------------------------------------
 // Module 5: Crop Growing Planner
 // ------------------------------------------------------
 model CropPlan {
-  id               String    @id @default(cuid())
+  id               String   @id @default(cuid())
   userId           String?
-  user             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  farmerName       String    @default("Guest Farmer")
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  farmerName       String   @default("Guest Farmer")
   cropName         String
   cropId           String
   locationName     String
   sowingDate       DateTime
   landArea         Float
-  areaUnit         String    @default("acre")
+  areaUnit         String   @default("acre")
   soilType         String
   irrigationMethod String
   planData         Json
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([userId, createdAt])
   @@map("crop_plans")
@@ -276,16 +325,16 @@ model CropPlan {
 // Module 6: AI Chat Assistant Sessions
 // ------------------------------------------------------
 model ChatSession {
-  id         String    @id @default(cuid())
+  id         String   @id @default(cuid())
   userId     String?
-  farmerName String    @default("Guest Farmer")
-  title      String    @default("New Farming Chat")
-  language   String    @default("en")
+  farmerName String   @default("Guest Farmer")
+  title      String   @default("New Farming Chat")
+  language   String   @default("en")
   messages   Json
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@map("chat_sessions")
