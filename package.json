@@ -7,7 +7,6 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node test-mandi-features.js && node test-mandi-filters.js && node test-mandi-prediction.js",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {
