@@ -112,56 +112,237 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Resolve backend URL (server-only environment variable)
-    const backendUrl = process.env.PLANT_DISEASE_API_URL || "http://127.0.0.1:53147";
-    const predictEndpoint = `${backendUrl.replace(/\/+$/, "")}/predict`;
+    const rawBackendUrl = process.env.PLANT_DISEASE_API_URL?.trim();
+    const isVercelDeployment = !!(process.env.VERCEL || process.env.NEXT_PUBLIC_VERCEL_ENV);
+    const backendUrl = rawBackendUrl || "http://127.0.0.1:53147";
+    const isLocalhostUrl =
+      backendUrl.includes("127.0.0.1") ||
+      backendUrl.includes("localhost") ||
+      backendUrl.includes("0.0.0.0");
 
-    // 4. Forward to FastAPI backend (with optional auth header for HTTPS tunnel)
-    const outgoingFormData = new FormData();
-    outgoingFormData.append("file", file, file.name);
-
-    const requestHeaders: Record<string, string> = {};
-    if (process.env.PLANT_DISEASE_API_KEY) {
-      requestHeaders["X-Api-Key"] = process.env.PLANT_DISEASE_API_KEY;
-    }
-
-    let upstreamRes: Response;
-    try {
-      upstreamRes = await fetch(predictEndpoint, {
-        method: "POST",
-        headers: requestHeaders,
-        body: outgoingFormData,
-        signal: AbortSignal.timeout(15000),
-      });
-    } catch (fetchErr: unknown) {
-      const isTimeout =
-        fetchErr instanceof Error && fetchErr.name === "TimeoutError";
-
+    // Guard: Vercel serverless containers cannot connect to developer's localhost
+    if (isVercelDeployment && isLocalhostUrl) {
+      console.warn(
+        `[CropDiseaseAPI] Configuration Error: PLANT_DISEASE_API_URL is configured to local address '${backendUrl}' on Vercel deployment. Serverless functions cannot reach local machine loopback.`
+      );
       return NextResponse.json(
         {
           success: false,
           error: {
-            code: isTimeout ? "GATEWAY_TIMEOUT" : "INFERENCE_SERVICE_UNAVAILABLE",
-            message: isTimeout
-              ? "The inference service timed out while analyzing the image."
-              : "The plant disease inference backend is currently offline. Please ensure the model service is running at PLANT_DISEASE_API_URL.",
+            code: "VERCEL_LOCALHOST_MISCONFIGURATION",
+            message:
+              "AgroSaathi is deployed on Vercel, but PLANT_DISEASE_API_URL points to a local address (127.0.0.1/localhost). Vercel cloud functions cannot connect to your local computer directly. To connect the trained ResNet50-DCBAM model to Vercel, expose your local service via a secure HTTPS tunnel (e.g., Cloudflare Tunnel) or deploy the Python service, then update PLANT_DISEASE_API_URL in Vercel settings. For local testing, please run AgroSaathi locally at http://localhost:3000.",
+            details: {
+              configuredUrl: backendUrl,
+              environment: "vercel",
+            },
           },
         },
         { status: 503 }
       );
     }
 
+    const cleanBaseUrl = backendUrl.replace(/\/+$/, "");
+    const predictEndpoint = `${cleanBaseUrl}/predict`;
+    const healthEndpoint = `${cleanBaseUrl}/health`;
+
+    // 4. Convert file to Blob Buffer for robust Node.js HTTP forwarding
+    const fileBytes = await file.arrayBuffer();
+    const fileBlob = new Blob([fileBytes], { type: file.type || "image/jpeg" });
+    const outgoingFormData = new FormData();
+    outgoingFormData.append("file", fileBlob, file.name);
+
+    const requestHeaders: Record<string, string> = {};
+    if (process.env.PLANT_DISEASE_API_KEY) {
+      requestHeaders["X-Api-Key"] = process.env.PLANT_DISEASE_API_KEY.trim();
+    }
+
+    console.log(
+      `[CropDiseaseAPI] Forwarding inference request to: ${predictEndpoint} (file: ${file.name}, size: ${file.size} bytes)`
+    );
+
+    let upstreamRes: Response;
+    try {
+      upstreamRes = await fetch(predictEndpoint, {
+        method: "POST https://ivory-mug-truck-telecom.trycloudflare.com/predict",
+        headers: requestHeaders,
+        body: outgoingFormData,
+        signal: AbortSignal.timeout(15000),
+      });
+    } catch (fetchErr: unknown) {
+      const isTimeout =
+        fetchErr instanceof Error &&
+        (fetchErr.name === "TimeoutError" || fetchErr.name === "AbortError");
+
+      const errMessage = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+
+      console.error(`[CropDiseaseAPI] Upstream fetch failure for ${predictEndpoint}:`, {
+        error: errMessage,
+        isTimeout,
+      });
+
+      if (isTimeout) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "INFERENCE_TIMEOUT",
+              message:
+                "The inference request timed out after 15 seconds. The Python model server at PLANT_DISEASE_API_URL took too long to respond.",
+              details: { endpoint: predictEndpoint },
+            },
+          },
+          { status: 504 }
+        );
+      }
+
+      // Probing health check to distinguish between completely offline service vs. /predict failure
+      let isHealthOnline = false;
+      try {
+        const probeRes = await fetch(healthEndpoint, {
+          method: "GET",
+          signal: AbortSignal.timeout(3000),
+        });
+        if (probeRes.ok) {
+          isHealthOnline = true;
+        }
+      } catch {
+        // Health probe also failed; backend is confirmed offline
+      }
+
+      if (isHealthOnline) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "INFERENCE_PREDICT_FAILED",
+              message: `The plant disease service at ${cleanBaseUrl} is online, but the /predict endpoint failed to accept the request (${errMessage}).`,
+              details: { endpoint: predictEndpoint },
+            },
+          },
+          { status: 502 }
+        );
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "INFERENCE_SERVICE_UNAVAILABLE",
+            message: `The plant disease inference backend is currently offline or unreachable at ${cleanBaseUrl}. Please ensure the model service (server.py) is running on port 53147.`,
+            details: {
+              endpoint: predictEndpoint,
+              error: process.env.NODE_ENV === "development" ? errMessage : undefined,
+            },
+          },
+        },
+        { status: 503 }
+      );
+    }
+
+    console.log(
+      `[CropDiseaseAPI] Upstream response: HTTP ${upstreamRes.status} ${upstreamRes.statusText}`
+    );
+
     if (!upstreamRes.ok) {
-      let errorDetail = "Upstream model inference failed.";
+      let upstreamDetail = "";
       try {
         const errorJson = await upstreamRes.json();
         if (errorJson?.detail) {
-          errorDetail =
+          upstreamDetail =
             typeof errorJson.detail === "string"
               ? errorJson.detail
               : JSON.stringify(errorJson.detail);
         }
       } catch {
-        // use default message
+        // fallback to status text
+      }
+
+      if (upstreamRes.status === 404) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "INFERENCE_ENDPOINT_NOT_FOUND",
+              message: `Inference endpoint was not found at ${predictEndpoint} (HTTP 404). Verify that server.py defines the /predict route.`,
+            },
+          },
+          { status: 502 }
+        );
+      }
+
+      if (upstreamRes.status === 413) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "FILE_TOO_LARGE",
+              message:
+                upstreamDetail ||
+                "Uploaded leaf image exceeds the maximum 5 MB limit supported by the model.",
+            },
+          },
+          { status: 413 }
+        );
+      }
+
+      if (upstreamRes.status === 400) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "INVALID_IMAGE_DATA",
+              message:
+                upstreamDetail ||
+                "The uploaded image could not be decoded. Please upload a valid JPEG, PNG, or WEBP leaf image.",
+            },
+          },
+          { status: 400 }
+        );
+      }
+
+      if (upstreamRes.status === 401 || upstreamRes.status === 403) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "INFERENCE_UNAUTHORIZED",
+              message:
+                "Authentication failed with the inference server. Check your PLANT_DISEASE_API_KEY configuration.",
+            },
+          },
+          { status: 502 }
+        );
+      }
+
+      if (upstreamRes.status === 503) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "MODEL_NOT_INITIALIZED",
+              message:
+                upstreamDetail ||
+                "Plant disease inference model is currently not loaded or initialized on the server.",
+            },
+          },
+          { status: 503 }
+        );
+      }
+
+      if (upstreamRes.status >= 500) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "UPSTREAM_MODEL_ERROR",
+              message:
+                "The Python inference server encountered an internal error during ResNet50-DCBAM model processing.",
+              details: process.env.NODE_ENV === "development" ? upstreamDetail : undefined,
+            },
+          },
+          { status: 502 }
+        );
       }
 
       return NextResponse.json(
@@ -169,14 +350,42 @@ export async function POST(req: NextRequest) {
           success: false,
           error: {
             code: `UPSTREAM_${upstreamRes.status}`,
-            message: errorDetail,
+            message: upstreamDetail || `Upstream inference service returned HTTP ${upstreamRes.status}.`,
           },
         },
         { status: upstreamRes.status }
       );
     }
 
-    const pyData: PythonPredictionResponse = await upstreamRes.json();
+    let pyData: PythonPredictionResponse;
+    try {
+      pyData = await upstreamRes.json();
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "INVALID_RESPONSE_SCHEMA",
+            message: "Failed to parse JSON response from the plant disease inference service.",
+          },
+        },
+        { status: 502 }
+      );
+    }
+
+    if (!pyData || typeof pyData.predicted_class_label !== "string" || typeof pyData.confidence !== "number") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "UNEXPECTED_RESPONSE_SCHEMA",
+            message: "The model inference response is missing required classification fields.",
+            details: process.env.NODE_ENV === "development" ? pyData : undefined,
+          },
+        },
+        { status: 502 }
+      );
+    }
 
     // 5. Augment prediction with ICAR agronomic guidance
     const guidance = getAgronomicGuidance(pyData.predicted_class_label);
@@ -239,6 +448,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[CropDiseaseAPI] Uncaught handler error:", errorMsg);
     return NextResponse.json(
       {
         success: false,

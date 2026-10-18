@@ -99,6 +99,7 @@ export const CropDiseasePreview: React.FC = () => {
   const [modelResult, setModelResult] = useState<ModelDiagnosisResult | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isSupportedCropsOpen, setIsSupportedCropsOpen] = useState<boolean>(false);
 
@@ -130,6 +131,7 @@ export const CropDiseasePreview: React.FC = () => {
       setPreviewImage(null);
     }
     setSelectedFileName(null);
+    setCurrentFile(null);
     setSelectedSampleIndex(index);
   };
 
@@ -156,6 +158,7 @@ export const CropDiseasePreview: React.FC = () => {
     setAnalysisError(null);
     setSelectedSampleIndex(null);
     setSelectedFileName(file.name);
+    setCurrentFile(file);
 
     if (previewImage) {
       URL.revokeObjectURL(previewImage);
@@ -224,6 +227,7 @@ export const CropDiseasePreview: React.FC = () => {
       setPreviewImage(null);
     }
     setSelectedFileName(null);
+    setCurrentFile(null);
     setAnalysisError(null);
     setModelResult(null);
     setSelectedSampleIndex(0);
@@ -383,7 +387,9 @@ export const CropDiseasePreview: React.FC = () => {
                     variant="primary"
                     size="sm"
                     onClick={() => {
-                      if (fileInputRef.current?.files?.[0]) {
+                      if (currentFile) {
+                        processFile(currentFile);
+                      } else if (fileInputRef.current?.files?.[0]) {
                         processFile(fileInputRef.current.files[0]);
                       }
                     }}

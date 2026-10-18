@@ -39,7 +39,7 @@ export interface UseVoiceAssistantOptions {
   onTranscriptComplete?: (finalText: string) => void;
 }
 
-export type TranscriptionEngine = "browser-native" | "gemini-audio" | "idle";
+export type TranscriptionEngine = "gemini-audio" | "idle";
 
 export function useVoiceAssistant({
   language,
@@ -58,18 +58,15 @@ export function useVoiceAssistant({
   const [error, setError] = useState<string | null>(null);
 
   // References
-  const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const isManuallyStoppedRef = useRef(false);
   const isCancelledRef = useRef(false);
-  const nativeFinalReceivedRef = useRef(false);
-  const nativeErrorEncounteredRef = useRef<string | null>(null);
+  const autoStopTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Map app languages to BCP-47 speech tags
+  // Map app languages to BCP-47 speech tags for TTS
   const getSpeechLangTag = useCallback((lang: SupportedLanguage): string => {
     switch (lang) {
       case "hi":
@@ -84,23 +81,16 @@ export function useVoiceAssistant({
     }
   }, []);
 
-  // Initialize Speech Recognition & Synthesis capability checks
+  // Check hardware and browser support for MediaRecorder & SpeechSynthesis
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const hasSpeechRec =
-        !!(window as any).SpeechRecognition ||
-        !!(window as any).webkitSpeechRecognition ||
-        !!(window as any).mozSpeechRecognition ||
-        !!(window as any).msSpeechRecognition;
-
       const hasMediaDevices =
         typeof navigator !== "undefined" &&
         !!navigator.mediaDevices &&
         typeof navigator.mediaDevices.getUserMedia === "function" &&
         typeof MediaRecorder !== "undefined";
 
-      // Supported if either native recognition or MediaRecorder audio fallback is present
-      setVoiceSupported(hasSpeechRec || hasMediaDevices);
+      setVoiceSupported(hasMediaDevices);
 
       if ("speechSynthesis" in window) {
         setTtsSupported(true);
@@ -125,15 +115,11 @@ export function useVoiceAssistant({
   useEffect(() => {
     return () => {
       cleanupStream();
+      if (autoStopTimerRef.current) {
+        clearTimeout(autoStopTimerRef.current);
+      }
       if (synthRef.current && synthRef.current.speaking) {
         synthRef.current.cancel();
-      }
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.stop();
-        } catch {
-          // ignore
-        }
       }
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         try {
@@ -145,13 +131,14 @@ export function useVoiceAssistant({
     };
   }, [cleanupStream]);
 
-  // Transcribe recorded audio blob with server-side Gemini endpoint
+  // Transcribe recorded audio blob via server-side Gemini STT endpoint
   const transcribeAudioBlob = useCallback(
     async (blob: Blob, targetLang: SupportedLanguage) => {
       if (!blob || blob.size < 400) {
         setIsProcessing(false);
         setTranscriptionStatus(null);
         setActiveEngine("idle");
+        setError("No audio detected. Please try speaking closer to your microphone or type your question.");
         return;
       }
 
@@ -177,28 +164,28 @@ export function useVoiceAssistant({
           body: formData,
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.text && data.text.trim().length > 0) {
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.success) {
+          if (data.text && data.text.trim().length > 0) {
             const cleanResult = data.text.trim();
             setInterimTranscript(cleanResult);
+            setError(null);
             if (onTranscriptComplete) {
               onTranscriptComplete(cleanResult);
             }
-            setError(null);
-          } else if (!data.success) {
-            setError(data.message || "AI audio transcription unavailable. Please type your question.");
+          } else {
+            setError(data.message || "No speech detected in audio. Please speak clearly or type your message.");
           }
         } else {
-          const errData = await res.json().catch(() => ({}));
           setError(
-            errData.message ||
-              "Speech service encountered an issue. You can continue typing your question."
+            data.message ||
+              "AI speech transcription is temporarily unavailable. Please type your message."
           );
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.warn("Server transcription request failed:", err);
-        setError("Transcription network error. You can continue typing your question.");
+        setError("Network error during speech transcription. Please type your message.");
       } finally {
         setIsProcessing(false);
         setTranscriptionStatus(null);
@@ -208,15 +195,32 @@ export function useVoiceAssistant({
     [onTranscriptComplete]
   );
 
-  // Start microphone capture with dual-engine strategy
+  // Stop recording and send audio for transcription
+  const stopListening = useCallback(() => {
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
+    }
+
+    setIsListening(false);
+
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        cleanupStream();
+      }
+    } else {
+      cleanupStream();
+    }
+  }, [cleanupStream]);
+
+  // Start microphone recording cleanly with MediaRecorder (No simultaneous native speech recognition)
   const startListening = useCallback(async () => {
     setError(null);
     setInterimTranscript("");
     setTranscriptionStatus("Listening...");
-    isManuallyStoppedRef.current = false;
     isCancelledRef.current = false;
-    nativeFinalReceivedRef.current = false;
-    nativeErrorEncounteredRef.current = null;
     audioChunksRef.current = [];
 
     // If currently speaking, stop speech first
@@ -228,7 +232,7 @@ export function useVoiceAssistant({
 
     if (typeof window === "undefined") return;
 
-    // 1. Acquire microphone stream via getUserMedia for reliable audio capture & server fallback
+    // 1. Acquire microphone stream via getUserMedia
     let stream: MediaStream | null = null;
     try {
       if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === "function") {
@@ -240,12 +244,15 @@ export function useVoiceAssistant({
           },
         });
         audioStreamRef.current = stream;
+      } else {
+        throw new Error("MEDIA_DEVICES_NOT_SUPPORTED");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errName = err instanceof Error ? err.name : "";
       console.warn("Microphone access error:", err);
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+      if (errName === "NotAllowedError" || errName === "PermissionDeniedError") {
         setError("Microphone permission was denied. Please allow microphone access in your browser settings.");
-      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+      } else if (errName === "NotFoundError" || errName === "DevicesNotFoundError") {
         setError("No microphone was detected on this device.");
       } else {
         setError("Unable to access microphone. Please type your message.");
@@ -254,217 +261,80 @@ export function useVoiceAssistant({
       return;
     }
 
-    // 2. Setup MediaRecorder as robust fallback buffer
-    let mediaRecorder: MediaRecorder | null = null;
-    if (stream && typeof MediaRecorder !== "undefined") {
-      try {
-        const mimeTypes = [
-          "audio/webm;codecs=opus",
-          "audio/webm",
-          "audio/mp4",
-          "audio/ogg;codecs=opus",
-          "audio/wav",
-        ];
-        const selectedMime = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || "";
+    // 2. Setup MediaRecorder for reliable audio capture
+    try {
+      const mimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+        "audio/wav",
+      ];
+      const selectedMime = mimeTypes.find((m) => MediaRecorder.isTypeSupported(m)) || "";
 
-        mediaRecorder = selectedMime
-          ? new MediaRecorder(stream, { mimeType: selectedMime })
-          : new MediaRecorder(stream);
+      const mediaRecorder = selectedMime
+        ? new MediaRecorder(stream, { mimeType: selectedMime })
+        : new MediaRecorder(stream);
 
-        mediaRecorder.ondataavailable = (event: BlobEvent) => {
-          if (event.data && event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
-          }
-        };
+      mediaRecorder.ondataavailable = (event: BlobEvent) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
 
-        mediaRecorder.onstop = () => {
-          cleanupStream();
-          // If cancelled by user, discard
-          if (isCancelledRef.current) {
-            audioChunksRef.current = [];
-            return;
-          }
+      mediaRecorder.onstop = () => {
+        cleanupStream();
 
-          // If native recognition already provided final text, skip server fallback
-          if (nativeFinalReceivedRef.current) {
-            audioChunksRef.current = [];
-            return;
-          }
-
-          // If native recognition failed or produced no final text, send to Gemini fallback
-          if (audioChunksRef.current.length > 0) {
-            const recordedBlob = new Blob(audioChunksRef.current, {
-              type: mediaRecorder?.mimeType || "audio/webm",
-            });
-            audioChunksRef.current = [];
-            transcribeAudioBlob(recordedBlob, language);
-          }
-        };
-
-        mediaRecorderRef.current = mediaRecorder;
-        mediaRecorder.start(250); // Slice chunks every 250ms
-      } catch (recErr) {
-        console.warn("MediaRecorder setup error:", recErr);
-      }
-    }
-
-    // 3. Setup Browser-Native SpeechRecognition for real-time live preview (if supported)
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
-
-    if (SpeechRecognition) {
-      try {
-        if (recognitionRef.current) {
-          try {
-            recognitionRef.current.abort();
-          } catch {
-            // ignore
-          }
+        // If cancelled by user, discard buffer
+        if (isCancelledRef.current) {
+          audioChunksRef.current = [];
+          return;
         }
 
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.lang = getSpeechLangTag(language);
-        recognition.maxAlternatives = 1;
+        if (audioChunksRef.current.length > 0) {
+          const recordedBlob = new Blob(audioChunksRef.current, {
+            type: mediaRecorder?.mimeType || "audio/webm",
+          });
+          audioChunksRef.current = [];
+          transcribeAudioBlob(recordedBlob, language);
+        } else {
+          setError("No audio captured. Please speak closer to your microphone or type your message.");
+        }
+      };
 
-        recognition.onstart = () => {
-          setIsListening(true);
-          setActiveEngine("browser-native");
-          setError(null);
-        };
-
-        recognition.onresult = (event: any) => {
-          let interim = "";
-          let final = "";
-
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const item = event.results[i];
-            if (item.isFinal) {
-              final += item[0].transcript;
-            } else {
-              interim += item[0].transcript;
-            }
-          }
-
-          if (interim) {
-            setInterimTranscript(interim);
-          }
-
-          if (final.trim()) {
-            nativeFinalReceivedRef.current = true;
-            setInterimTranscript(final.trim());
-            if (onTranscriptComplete) {
-              onTranscriptComplete(final.trim());
-            }
-          }
-        };
-
-        recognition.onerror = (event: any) => {
-          console.warn("Native speech recognition error:", event.error);
-          nativeErrorEncounteredRef.current = event.error;
-
-          if (event.error === "not-allowed" || event.error === "permission-denied") {
-            setError("Microphone permission was denied. Please allow microphone access in your browser.");
-            setIsListening(false);
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-              try {
-                mediaRecorderRef.current.stop();
-              } catch {
-                // ignore
-              }
-            }
-          } else if (event.error === "network" || event.error === "service-not-allowed") {
-            // DO NOT emit a fatal network error.
-            // In Chromium/Brave/restricted networks, Google speech servers are blocked.
-            // Seamlessly signal that AgroSaathi AI audio fallback is active!
-            setTranscriptionStatus("Browser speech service unavailable. Using AgroSaathi AI fallback...");
-            setActiveEngine("gemini-audio");
-            // Do not abort MediaRecorder; it continues recording the user's voice for server fallback.
-          } else if (event.error === "no-speech") {
-            // Quietly handled
-          } else {
-            console.warn(`Speech recognition status: ${event.error}`);
-          }
-        };
-
-        recognition.onend = () => {
-          // If native recognition ended without final text and not cancelled, stop MediaRecorder to trigger fallback
-          if (!nativeFinalReceivedRef.current && !isCancelledRef.current) {
-            if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-              try {
-                mediaRecorderRef.current.stop();
-              } catch {
-                // ignore
-              }
-            }
-          }
-          setIsListening(false);
-        };
-
-        recognitionRef.current = recognition;
-        recognition.start();
-        setIsListening(true);
-        return;
-      } catch (err: any) {
-        console.warn("Failed to initialize native speech recognition, continuing with MediaRecorder fallback:", err);
-      }
-    }
-
-    // If native SpeechRecognition is not supported at all (e.g. Firefox, Brave without Web Speech),
-    // MediaRecorder handles recording exclusively!
-    if (mediaRecorder) {
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(250); // Slice chunks every 250ms
       setIsListening(true);
       setActiveEngine("gemini-audio");
-      setTranscriptionStatus("Listening (AgroSaathi AI Voice Mode)...");
-    } else {
-      setError("Voice recording is not supported in this browser. Please type your message.");
+      setTranscriptionStatus("Listening... Click microphone to finish speaking.");
+
+      // Safety timeout: automatically stop after 60 seconds of recording
+      if (autoStopTimerRef.current) {
+        clearTimeout(autoStopTimerRef.current);
+      }
+      autoStopTimerRef.current = setTimeout(() => {
+        stopListening();
+      }, 60000);
+    } catch (recErr: unknown) {
+      console.error("MediaRecorder initialization error:", recErr);
+      setError("Audio recording could not be initialized. Please type your message.");
       setIsListening(false);
-    }
-  }, [language, getSpeechLangTag, onTranscriptComplete, cleanupStream, transcribeAudioBlob]);
-
-  // Stop microphone capture and process audio
-  const stopListening = useCallback(() => {
-    isManuallyStoppedRef.current = true;
-    setIsListening(false);
-
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {
-        // ignore
-      }
-    } else {
       cleanupStream();
     }
-  }, [cleanupStream]);
+  }, [language, cleanupStream, transcribeAudioBlob, stopListening]);
 
-  // Cancel microphone capture without submitting or transcribing
+  // Cancel ongoing recording without transcribing
   const cancelListening = useCallback(() => {
     isCancelledRef.current = true;
+    audioChunksRef.current = [];
+    if (autoStopTimerRef.current) {
+      clearTimeout(autoStopTimerRef.current);
+      autoStopTimerRef.current = null;
+    }
     setIsListening(false);
     setIsProcessing(false);
     setTranscriptionStatus(null);
     setActiveEngine("idle");
-    setInterimTranscript("");
-    audioChunksRef.current = [];
-
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch {
-        // ignore
-      }
-    }
 
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       try {
@@ -473,36 +343,33 @@ export function useVoiceAssistant({
         // ignore
       }
     }
-
     cleanupStream();
   }, [cleanupStream]);
 
-  // Text-To-Speech Playback
+  // Text-To-Speech Synthesis helper
   const speakText = useCallback(
-    (rawText: string, overrideLang?: SupportedLanguage) => {
-      if (!synthRef.current || !ttsSupported) return;
+    (rawText: string, targetLang?: SupportedLanguage) => {
+      if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
-      // Stop any current speech
-      synthRef.current.cancel();
+      const synth = window.speechSynthesis;
+      synth.cancel();
 
-      const textToSpeak = cleanTextForSpeech(rawText);
-      if (!textToSpeak) return;
+      const text = cleanTextForSpeech(rawText);
+      if (!text) return;
 
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      const targetLang = overrideLang || language;
-      const bcpTag = getSpeechLangTag(targetLang);
-      utterance.lang = bcpTag;
-      utterance.rate = 0.95; // slightly slower for clear agricultural comprehension
+      const lang = targetLang || language;
+      const langTag = getSpeechLangTag(lang);
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = langTag;
+      utterance.rate = 0.95;
       utterance.pitch = 1.0;
 
-      // Try finding an appropriate voice
-      const voices = synthRef.current.getVoices();
-      if (voices && voices.length > 0) {
+      const voices = synth.getVoices();
+      if (voices.length > 0) {
         const matchingVoice =
-          voices.find((v) => v.lang.toLowerCase() === bcpTag.toLowerCase()) ||
-          voices.find((v) => v.lang.toLowerCase().startsWith(targetLang)) ||
-          voices.find((v) => v.lang.includes("IN") || v.name.includes("India"));
-
+          voices.find((v) => v.lang === langTag || v.lang.startsWith(lang)) ||
+          voices.find((v) => v.lang.includes("IN") || v.lang.includes("hi") || v.lang.includes("en-IN"));
         if (matchingVoice) {
           utterance.voice = matchingVoice;
         }
@@ -519,19 +386,21 @@ export function useVoiceAssistant({
       };
 
       utterance.onerror = (e) => {
-        console.warn("Speech synthesis error:", e);
+        if (e.error !== "interrupted" && e.error !== "canceled") {
+          console.warn("Speech synthesis playback notice:", e.error);
+        }
         setIsSpeaking(false);
         setIsPaused(false);
       };
 
       currentUtteranceRef.current = utterance;
-      synthRef.current.speak(utterance);
+      synth.speak(utterance);
     },
-    [language, getSpeechLangTag, ttsSupported]
+    [language, getSpeechLangTag]
   );
 
   const stopSpeaking = useCallback(() => {
-    if (synthRef.current) {
+    if (synthRef.current && synthRef.current.speaking) {
       synthRef.current.cancel();
       setIsSpeaking(false);
       setIsPaused(false);

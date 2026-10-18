@@ -572,7 +572,17 @@ export async function generateChatbotResponse(
   const { groundedText, citations } = contextResult;
 
   const apiKey = process.env.GEMINI_API_KEY;
-  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  let modelName =
+    process.env.GEMINI_CHAT_MODEL || process.env.GEMINI_MODEL || "gemini-3.5-flash";
+
+  // Sanitize legacy / deprecated models to prevent 404
+  if (
+    modelName === "gemini-1.5-flash" ||
+    modelName.includes("1.5") ||
+    modelName === "gemini-2.0-flash"
+  ) {
+    modelName = "gemini-3.5-flash";
+  }
 
   // 2. If no API key configured, use deterministic grounded engine
   if (!apiKey || apiKey.trim() === "" || apiKey === "your_gemini_api_key_here") {
@@ -611,11 +621,14 @@ export async function generateChatbotResponse(
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
 
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
       body: JSON.stringify({
         systemInstruction: {
           parts: [{ text: systemPrompt }],

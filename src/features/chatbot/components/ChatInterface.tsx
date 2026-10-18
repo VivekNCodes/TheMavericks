@@ -92,7 +92,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   } = useVoiceAssistant({
     language,
     onTranscriptComplete: (finalTranscript) => {
-      setInputText((prev) => (prev ? `${prev} ${finalTranscript}` : finalTranscript));
+      if (finalTranscript && finalTranscript.trim()) {
+        handleSendMessage(finalTranscript.trim());
+      }
     },
   });
 
@@ -637,6 +639,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* 4. Chat Input Bar with Microphone & Voice Output Controls */}
       <div className="p-3 sm:p-4 bg-white border-t border-slate-200 shrink-0">
+        {voiceError && (
+          <div className="mb-2 p-2.5 px-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between gap-2 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>{voiceError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={clearVoiceError}
+              className="text-amber-700 hover:text-amber-900 text-xs font-semibold shrink-0 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-krishi-500/20 focus-within:border-krishi-600 transition-all">
           <textarea
             ref={inputRef}
