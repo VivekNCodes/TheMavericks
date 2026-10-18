@@ -1,4 +1,4 @@
-# KrishiSetu AI (कृषि सेतु)
+# AgroSaathi (एग्रोसाथी)
 
 [![Next.js 14](https://img.shields.io/badge/Next.js-14-15803D.svg?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
@@ -65,6 +65,7 @@ For detailed rules and guidelines, see:
 - [Git Workflow](docs/GIT_WORKFLOW.md)
 - [Test Plan](docs/TEST_PLAN.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
+- [GitHub Actions & CI Setup Guide](.github/ACTIONS_SETUP.md)
 
 ---
 

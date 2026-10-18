@@ -1,4 +1,4 @@
-// KrishiSetu AI - Prisma Schema
+// AgroSaathi - Prisma Schema
 // Database Engine: Neon Serverless PostgreSQL
 
 datasource db {
@@ -22,23 +22,34 @@ enum UserRole {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  phone        String        @unique
-  fullName     String
-  role         UserRole      @default(FARMER)
-  state        String        @default("Rajasthan")
-  district     String        @default("Jaipur")
-  village      String?
-  avatarUrl    String?
-  isVerified   Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  googleId          String?       @unique
+  email             String?       @unique
+  phone             String?       @unique
+  fullName          String
+  preferredName     String?
+  preferredLanguage String        @default("en")
+  role              UserRole      @default(FARMER)
+  state             String        @default("Rajasthan")
+  district          String        @default("Jaipur")
+  village           String?
+  farmSize          Float?
+  farmSizeUnit      String        @default("acre")
+  soilType          String?
+  irrigationMethod  String?
+  farmingExperience Int?
+  avatarUrl         String?
+  isVerified        Boolean       @default(false)
+  lastLoginAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  crops        CropProfile[]
-  listings     MarketplaceListing[]
-  inquiries    MarketplaceInquiry[]
-  cropPlans    CropPlan[]
-  chatSessions ChatSession[]
+  crops             CropProfile[]
+  listings          MarketplaceListing[]
+  inquiries         MarketplaceInquiry[]
+  cropPlans         CropPlan[]
+  chatSessions      ChatSession[]
+  diseaseLogs       DiseaseLog[]
 
   @@map("users")
 }
@@ -57,22 +68,28 @@ enum GrowthStage {
 }
 
 model CropProfile {
-  id            String         @id @default(cuid())
-  userId        String
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cropName      String         // e.g. "Tomato", "Wheat", "Chili"
-  variety       String?        // e.g. "Abhinav F1", "HD-2967"
-  acreage       Float          // e.g. 1.2
-  growthStage   GrowthStage    @default(VEGETATIVE)
-  sowingDate    DateTime?
-  fieldLocation String?        // e.g. "Plot 2 - Jaipur North"
-  imageUrl      String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                  String         @id @default(cuid())
+  userId              String
+  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cropName            String         // e.g. "Tomato", "Wheat", "Chili"
+  variety             String?        // e.g. "Abhinav F1", "HD-2967"
+  acreage             Float          // e.g. 1.2
+  growthStage         GrowthStage    @default(VEGETATIVE)
+  sowingDate          DateTime?
+  expectedHarvestDate DateTime?
+  fieldLocation       String?        // e.g. "Plot 2 - Jaipur North"
+  soilType            String?
+  irrigationType      String?
+  fertilizerNotes     String?
+  notes               String?
+  imageUrl            String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  diseaseLogs   DiseaseLog[]
-  irrigationLogs IrrigationLog[]
+  diseaseLogs         DiseaseLog[]
+  irrigationLogs      IrrigationLog[]
 
+  @@index([userId])
   @@map("crop_profiles")
 }
 
@@ -88,6 +105,8 @@ enum SeverityLevel {
 
 model DiseaseLog {
   id               String         @id @default(cuid())
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   cropProfileId    String?
   cropProfile      CropProfile?   @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
   imageUrl         String
@@ -102,6 +121,7 @@ model DiseaseLog {
   culturalControl  String?        // e.g. "Remove bottom leaves, improve airflow"
   createdAt        DateTime       @default(now())
 
+  @@index([userId, createdAt])
   @@map("disease_logs")
 }
 
@@ -111,21 +131,46 @@ model DiseaseLog {
 model MandiPrice {
   id             String    @id @default(cuid())
   mandiName      String    // e.g. "Jaipur Mandi"
-  state          String    @default("Rajasthan")
-  district       String    @default("Jaipur")
-  cropName       String    // e.g. "Tomato"
-  variety        String?
+  state          String    @default("Uttar Pradesh")
+  district       String    @default("Agra")
+  cropName       String    // e.g. "Potato", "Wheat"
+  variety        String?   @default("Common")
   grade          String?   @default("FAQ")
   minPrice       Float     // in INR per Quintal
   modalPrice     Float     // in INR per Quintal
   maxPrice       Float     // in INR per Quintal
+  priceUnit      String    @default("INR/Quintal")
   arrivalsTonnes Float?    // e.g. 1250
   trendPercent   Float?    // e.g. +12.0
-  recordDate     DateTime  @default(now())
+  source         String    @default("data.gov.in")
+  recordDate     DateTime  @default(now()) // official reporting date
+  recordHash     String?   @unique // deterministic hash for idempotent deduplication
+  fetchedAt      DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
+  @@index([state, district, cropName])
+  @@index([cropName, recordDate])
   @@index([mandiName, cropName, recordDate])
   @@map("mandi_prices")
 }
+
+model MandiSyncLog {
+  id              String    @id @default(cuid())
+  source          String    @default("data.gov.in")
+  status          String    // "SUCCESS" | "FAILED" | "PARTIAL"
+  recordsFetched  Int       @default(0)
+  recordsInserted Int       @default(0)
+  recordsUpdated  Int       @default(0)
+  message         String?
+  errorDetails    String?
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  @@index([startedAt])
+  @@map("mandi_sync_logs")
+}
+
 
 // ------------------------------------------------------
 // Module 3: Smart Irrigation Advisor

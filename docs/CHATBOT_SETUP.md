@@ -1,6 +1,6 @@
-# KrishiSetu AI Sahayak (कृषि मित्र) - Chatbot Setup & Integration Guide
+# AgroSaathi AI Sahayak (कृषि मित्र) - Chatbot Setup & Integration Guide
 
-Welcome to the configuration and operational guide for **KrishiSetu AI Sahayak**, the multilingual conversational agricultural assistant powered by Google Gemini and grounded in validated Indian agronomic science.
+Welcome to the configuration and operational guide for **AgroSaathi AI Sahayak**, the multilingual conversational agricultural assistant powered by Google Gemini and grounded in validated Indian agronomic science.
 
 ---
 
@@ -10,7 +10,7 @@ Welcome to the configuration and operational guide for **KrishiSetu AI Sahayak**
 - **Multilingual Support**: English (`en`), Hindi (`hi`), Marathi (`mr`), and Punjabi (`pa`).
 - **Grounded Agricultural Knowledge**: Injected from ICAR package of practices, 6 Indian soil classifications (Alluvial, Black Cotton, Red/Yellow, Laterite, Desert/Sandy, Mountain/Loamy), foliar plant pathology, and real-time hyper-local weather via Open-Meteo.
 - **Safety & Explanatory Guardrails**: Strictly avoids prescribing synthetic chemical doses or toxic pesticide mixtures; advocates Integrated Pest Management (IPM), cultural sanitation, and directs farmers to nearest Krishi Vigyan Kendras (KVK).
-- **Graceful Offline Mode**: If `GEMINI_API_KEY` is absent or quota is exceeded, automatically falls back to KrishiSetu's built-in ICAR rule engine without throwing application errors.
+- **Graceful Offline Mode**: If `GEMINI_API_KEY` is absent or quota is exceeded, automatically falls back to AgroSaathi's built-in ICAR rule engine without throwing application errors.
 - **Server-Side Route Handler**: The Gemini API key is isolated in `src/app/api/assistant/chat/route.ts` and never exposed to browser client bundles.
 
 ---
@@ -41,7 +41,7 @@ GEMINI_MODEL="gemini-1.5-flash"
 
 The free tier for `gemini-1.5-flash` in Google AI Studio provides generous limits suitable for hackathon demonstrations and community farmer pilots:
 
-| Metric | Free Tier Limit | KrishiSetu Safeguard |
+| Metric | Free Tier Limit | AgroSaathi Safeguard |
 |---|---|---|
 | **Requests per Minute (RPM)** | 15 RPM | Built-in IP sliding-window limiter (25 req/min per IP) |
 | **Tokens per Minute (TPM)** | 1,000,000 TPM | Context trimming (last 10 turns, max 1,200 chars per message) |
@@ -67,7 +67,7 @@ The assistant executes a 2-stage grounding pipeline for every query:
 
 ## 5. Session History & Persistence
 
-- **Local Persistence**: All chat messages are stored locally in the browser's `localStorage` (`krishisetu_chat_<sessionId>`).
+- **Local Persistence**: All chat messages are stored locally in the browser's `localStorage` (`agrosaathi_chat_<sessionId>`).
 - **Neon Cloud Persistence**: The route `/api/assistant/sessions` syncs sessions to the `ChatSession` table in Neon PostgreSQL if `DATABASE_URL` is configured.
 - **Privacy & PII Protection**: Indian 10-digit phone numbers and email addresses are automatically scrubbed and redacted (`[REDACTED_PHONE]`) before sending prompts to the language model.
 

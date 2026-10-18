@@ -1,4 +1,4 @@
-# KrishiSetu AI - Database Guidelines & Neon PostgreSQL
+# AgroSaathi - Database Guidelines & Neon PostgreSQL
 
 ## 1. Database Architecture & Technology
 
@@ -15,10 +15,10 @@
 Define the following in your `.env.local` (see `.env.example`):
 ```env
 # Serverless connection with connection pooler
-DATABASE_URL="postgresql://[user]:[password]@[neon-endpoint]-pooler.us-east-2.aws.neon.tech/krishisetu?sslmode=require&pgbouncer=true"
+DATABASE_URL="postgresql://[user]:[password]@[neon-endpoint]-pooler.us-east-2.aws.neon.tech/agrosaathi?sslmode=require&pgbouncer=true"
 
 # Direct connection for migrations
-DIRECT_URL="postgresql://[user]:[password]@[neon-endpoint].us-east-2.aws.neon.tech/krishisetu?sslmode=require"
+DIRECT_URL="postgresql://[user]:[password]@[neon-endpoint].us-east-2.aws.neon.tech/agrosaathi?sslmode=require"
 ```
 
 > **Data Honesty Notice**: In local development, the application operates in offline/mock fallback mode if database credentials are not yet configured. Do not claim Neon is connected unless verified with a real query.

@@ -19,6 +19,7 @@
 # misc
 .DS_Store
 *.pem
+.backup_*
 
 # debug
 npm-debug.log*
@@ -37,3 +38,11 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma generated files (if any)
+
+# External Python inference repository & checkpoints
+Plant-Disease-Classification/
+.venv/
+__pycache__/
+
+# Local JSON store fallback
+.data/

@@ -28,7 +28,7 @@ export const CropPlannerContainer: React.FC = () => {
   // Sync saved plans count from localStorage / API
   useEffect(() => {
     try {
-      const local = localStorage.getItem("krishisetu_crop_plans");
+      const local = localStorage.getItem("agrosaathi_crop_plans") || localStorage.getItem("krishisetu_crop_plans");
       if (local) {
         const parsed = JSON.parse(local);
         if (Array.isArray(parsed)) {
@@ -112,10 +112,10 @@ export const CropPlannerContainer: React.FC = () => {
 
     // Save to localStorage immediately
     try {
-      const local = localStorage.getItem("krishisetu_crop_plans");
+      const local = localStorage.getItem("agrosaathi_crop_plans") || localStorage.getItem("krishisetu_crop_plans");
       const list: SavedPlanItem[] = local ? JSON.parse(local) : [];
       const updated = [record, ...list.filter((p) => p.id !== activePlan.id)];
-      localStorage.setItem("krishisetu_crop_plans", JSON.stringify(updated));
+      localStorage.setItem("agrosaathi_crop_plans", JSON.stringify(updated));
       setSavedPlansCount(updated.length);
     } catch (e) {
       console.warn("LocalStorage save error:", e);

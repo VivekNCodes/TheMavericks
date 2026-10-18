@@ -1,8 +1,8 @@
-# KrishiSetu AI - Module Ownership & Team Boundaries
+# AgroSaathi - Module Ownership & Team Boundaries
 
 ## 1. Ownership Governance Overview
 
-To allow seamless parallel work by multiple developers without git conflicts, KrishiSetu AI assigns strict domain ownership. Changes outside your assigned scope require review and sign-off by the Integration Lead.
+To allow seamless parallel work by multiple developers without git conflicts, AgroSaathi assigns strict domain ownership. Changes outside your assigned scope require review and sign-off by the Integration Lead.
 
 ---
 

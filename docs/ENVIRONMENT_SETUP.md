@@ -1,4 +1,4 @@
-# KrishiSetu AI - Environment Setup Guide
+# AgroSaathi - Environment Setup Guide
 
 ## 1. Prerequisites
 
@@ -11,7 +11,7 @@
 
 ## 2. Fast Setup (Zero External Credentials Required)
 
-The KrishiSetu AI foundation has been architected to run immediately in offline/mock mode without requiring active third-party API keys or live cloud database connections.
+The AgroSaathi foundation has been architected to run immediately in offline/mock mode without requiring active third-party API keys or live cloud database connections.
 
 ```bash
 # 1. Install dependencies
@@ -24,7 +24,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to view the KrishiSetu AI Dashboard.
+Visit [http://localhost:3000](http://localhost:3000) to view the AgroSaathi Dashboard.
 
 ---
 
@@ -33,11 +33,11 @@ Visit [http://localhost:3000](http://localhost:3000) to view the KrishiSetu AI D
 When ready to provision live database tables:
 
 1. Sign in to your [Neon Console](https://console.neon.tech).
-2. Create a project: `krishisetu-db`.
+2. Create a project: `agrosaathi-db`.
 3. In the project dashboard, copy the pooled connection string:
    ```env
-   DATABASE_URL="postgresql://[user]:[password]@[endpoint]-pooler.us-east-2.aws.neon.tech/krishisetu?sslmode=require&pgbouncer=true"
-   DIRECT_URL="postgresql://[user]:[password]@[endpoint].us-east-2.aws.neon.tech/krishisetu?sslmode=require"
+   DATABASE_URL="postgresql://[user]:[password]@[endpoint]-pooler.us-east-2.aws.neon.tech/agrosaathi?sslmode=require&pgbouncer=true"
+   DIRECT_URL="postgresql://[user]:[password]@[endpoint].us-east-2.aws.neon.tech/agrosaathi?sslmode=require"
    ```
 4. Push schema to database:
    ```bash

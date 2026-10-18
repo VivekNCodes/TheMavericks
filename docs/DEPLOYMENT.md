@@ -1,8 +1,8 @@
-# KrishiSetu AI - Deployment & Vercel Configuration Guide
+# AgroSaathi - Deployment & Vercel Configuration Guide
 
 ## 1. Hosting Architecture
 
-KrishiSetu AI is optimized for deployment on **Vercel** as a unified Next.js 14 App Router application.
+AgroSaathi is optimized for deployment on **Vercel** as a unified Next.js 14 App Router application.
 
 - **Frontend & Server Components**: Vercel Edge / Serverless Functions.
 - **Static Assets**: Vercel Global Edge Network (CDN).
@@ -26,7 +26,7 @@ KrishiSetu AI is optimized for deployment on **Vercel** as a unified Next.js 14 
 
 3. **Configure Environment Variables**:
    Add the following in the Vercel Project Settings > Environment Variables:
-   - `NEXT_PUBLIC_APP_NAME` = `KrishiSetu AI`
+   - `NEXT_PUBLIC_APP_NAME` = `AgroSaathi`
    - `NEXT_PUBLIC_APP_DESCRIPTION` = `Smart Farming, Brighter Futures`
    - `DATABASE_URL` = `(Your Neon connection string with pgbouncer=true)`
    - `DIRECT_URL` = `(Your Neon direct connection string)`
