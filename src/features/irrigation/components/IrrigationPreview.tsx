@@ -1,267 +1,446 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  Calendar,
-  MapPin,
   Sprout,
-  Sun,
-  CloudRain,
-  AlertCircle,
-  ArrowRight,
-  Droplets,
-  Check,
+  CheckCircle2,
+  TestTube2,
+  Sliders,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { useWeather } from "@/hooks/useWeather";
-import { SAMPLE_IRRIGATION_RESULT } from "@/constants/sample-data";
+import { useLanguage } from "@/context/LanguageContext";
+import { DEMONSTRATION_PRESETS } from "../logic/agronomic-data";
+import { generateIrrigationSchedulePlan } from "../logic/water-budget-engine";
+import { runIrrigationEngineTests, TestCaseResult } from "../logic/water-budget-engine.test";
+import { FarmerModeView } from "./FarmerModeView";
+import {
+  AppLanguage,
+  IRRIGATION_TRANSLATIONS,
+} from "../logic/irrigation-translations";
+import {
+  FeasibleSchedule,
+  ForecastDataSource,
+  IrrigationFieldInput,
+  IrrigationMethodType,
+  LandAreaUnit,
+  WeatherDayForecast,
+} from "../types";
 
 export const IrrigationPreview: React.FC = () => {
-  const [activeStep, setActiveStep] = useState(1);
+  // Global app shell language context synchronization
+  const { setLanguage: setContextLanguage } = useLanguage();
+
+  // Language state: Default is "hinglish" (conversational wording) on both server and client initial render
+  const [language, setLanguageState] = useState<AppLanguage>("hinglish");
+
+  // After mount, safely load saved language preference from localStorage without causing hydration mismatch
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("krishisetu_language");
+      if (saved === "hi" || saved === "en") {
+        setLanguageState(saved);
+      }
+    } catch {
+      // Handle private browsing storage blocks
+    }
+  }, []);
+
+  // Handler for language button clicks: only 2 options (हिंदी and English)
+  const handleSelectLanguage = (lang: "hi" | "en") => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem("krishisetu_language", lang);
+    } catch {
+      // Handle private browsing storage blocks
+    }
+    setContextLanguage(lang);
+  };
+
+  const t = IRRIGATION_TRANSLATIONS[language] || IRRIGATION_TRANSLATIONS.hinglish;
+
+  // Track active demonstration preset (Default: Jaipur 1 Acre Tomato 40,000 L)
+  const [activePresetId, setActivePresetId] = useState<string | null>("jaipur-tomato-40k");
+
+  // Field & Water Budget Form States
   const [crop, setCrop] = useState("Tomato");
   const [growthStage, setGrowthStage] = useState("Flowering");
   const [soilType, setSoilType] = useState("Loamy");
   const [lastDate, setLastDate] = useState("2026-10-14");
   const [location, setLocation] = useState("Jaipur, Rajasthan");
+  const [coordinates, setCoordinates] = useState<{ lat: number; lon: number }>({
+    lat: 26.9124,
+    lon: 75.7873,
+  });
+  const [fieldArea, setFieldArea] = useState<number>(1.0);
+  const [areaUnit, setAreaUnit] = useState<LandAreaUnit>("acre");
+  const [irrigationMethod, setIrrigationMethod] = useState<IrrigationMethodType>("drip");
+  const [waterBudgetLiters, setWaterBudgetLiters] = useState<number>(40000);
+  const [flowRateLitersPerHour, setFlowRateLitersPerHour] = useState<number>(15000);
 
-  // Fetch live weather from Weather API based on field location
-  const { weather } = useWeather(location);
+  // Active selected schedule override
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string>("critical_stage_deficit");
 
-  const steps = [
-    { num: 1, title: "Crop Details", sub: "Select crop and field info" },
-    { num: 2, title: "Weather Data", sub: "Fetch forecast" },
-    { num: 3, title: "AI Analysis", sub: "Generate recommendation" },
-    { num: 4, title: "Results", sub: "Irrigation advice" },
-  ];
+  // In-browser verification test results modal/drawer state
+  const [testResults, setTestResults] = useState<TestCaseResult[] | null>(null);
 
-  const result = SAMPLE_IRRIGATION_RESULT;
-  const forecastDays = weather.forecast?.length ? weather.forecast : result.forecast;
+  // Fetch live weather from Weather API based on field location and coordinates
+  const {
+    weather,
+    isLoading: weatherLoading,
+    isError: weatherError,
+    errorMessage: weatherErrorMessage,
+    lastUpdatedText: weatherLastUpdated,
+    refetch: refetchWeather,
+  } = useWeather(location, coordinates);
+
+  const handleRefreshWeather = () => {
+    refetchWeather();
+  };
+
+  const forecastSource: ForecastDataSource =
+    weather.source === "open-meteo" ? "live_open_meteo" : "climatological_fallback";
+
+  const forecastDays: WeatherDayForecast[] = useMemo(() => {
+    return weather.forecast?.length
+      ? weather.forecast.map((d) => ({
+          day: d.day,
+          tempMax: d.tempMax,
+          tempMin: d.tempMin,
+          rainMm: d.rainMm,
+          rainProbability: d.rainProbability,
+          etoMm: d.etoMm,
+          condition: d.condition,
+          source: forecastSource,
+        }))
+      : [];
+  }, [weather.forecast, forecastSource]);
+
+  // Execute real, deterministic water balance calculation & schedule optimizer in the background
+  const plan = useMemo(() => {
+    const rawInput: Partial<IrrigationFieldInput> = {
+      crop,
+      growthStage,
+      soilType,
+      lastIrrigatedDate: lastDate,
+      fieldLocation: location,
+      fieldArea: Math.max(0.01, fieldArea || 1.0),
+      areaUnit,
+      irrigationMethod,
+      availableWaterBudgetLiters: Math.max(1000, waterBudgetLiters || 10000),
+      flowRateLitersPerHour: Math.max(1000, flowRateLitersPerHour || 15000),
+    };
+    return generateIrrigationSchedulePlan(rawInput, forecastDays, forecastSource);
+  }, [
+    crop,
+    growthStage,
+    soilType,
+    lastDate,
+    location,
+    fieldArea,
+    areaUnit,
+    irrigationMethod,
+    waterBudgetLiters,
+    flowRateLitersPerHour,
+    forecastDays,
+    forecastSource,
+  ]);
+
+  // Keep selectedScheduleId aligned if plan changes and current id is not found
+  useEffect(() => {
+    if (plan.recommendation?.recommendedScheduleId) {
+      const exists = plan.schedules.some((s) => s.id === selectedScheduleId);
+      if (!exists) {
+        setSelectedScheduleId(plan.recommendation.recommendedScheduleId);
+      }
+    }
+  }, [plan, selectedScheduleId]);
+
+  // Active schedule object being displayed
+  const activeSchedule: FeasibleSchedule = useMemo(() => {
+    const found = plan.schedules.find((s) => s.id === selectedScheduleId);
+    return (
+      found ||
+      plan.schedules.find((s) => s.id === plan.recommendation.recommendedScheduleId) ||
+      plan.schedules[0]
+    );
+  }, [plan.schedules, plan.recommendation.recommendedScheduleId, selectedScheduleId]);
+
+  // Pumping runtime calculation based on active schedule gross demand
+  const pumpingCalculation = useMemo(() => {
+    const rate = flowRateLitersPerHour > 0 ? flowRateLitersPerHour : 15000;
+    const hoursDecimal = activeSchedule.totalWaterUsedLiters / rate;
+    const hours = Math.floor(hoursDecimal);
+    const minutes = Math.round((hoursDecimal - hours) * 60);
+
+    const timeFormatted =
+      hours > 0 ? `${hours} hr ${minutes > 0 ? `${minutes} min` : ""}` : `${minutes} min`;
+
+    const timeFormattedHindi =
+      hours > 0 ? `${hours} घंटे ${minutes > 0 ? `${minutes} मिनट` : ""}` : `${minutes} मिनट`;
+
+    return {
+      hoursDecimal,
+      hours,
+      minutes,
+      timeFormatted: timeFormatted.trim(),
+      timeFormattedHindi: timeFormattedHindi.trim(),
+      rate,
+    };
+  }, [activeSchedule.totalWaterUsedLiters, flowRateLitersPerHour]);
+
+  // Helper for field changes that clears active preset label
+  const handleFieldChange = () => {
+    if (activePresetId !== null) {
+      setActivePresetId(null);
+    }
+  };
+
+  // Load a demonstration preset scenario
+  const applyPreset = (presetId: string) => {
+    const preset = DEMONSTRATION_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+
+    setCrop(preset.input.crop);
+    setGrowthStage(preset.input.growthStage);
+    setSoilType(preset.input.soilType);
+    setLastDate(preset.input.lastIrrigatedDate);
+    setLocation(preset.input.fieldLocation);
+    if (preset.input.fieldLocation.toLowerCase().includes("jaipur")) {
+      setCoordinates({ lat: 26.9124, lon: 75.7873 });
+    } else if (preset.input.fieldLocation.toLowerCase().includes("sanganer")) {
+      setCoordinates({ lat: 26.8197, lon: 75.7878 });
+    }
+    setFieldArea(preset.input.fieldArea);
+    setAreaUnit(preset.input.areaUnit);
+    setIrrigationMethod(preset.input.irrigationMethod);
+    setWaterBudgetLiters(preset.input.availableWaterBudgetLiters);
+    setFlowRateLitersPerHour(preset.input.flowRateLitersPerHour);
+    setActivePresetId(preset.id);
+  };
+
+  const handleLocationChange = (newLocation: string, newCoords?: { lat: number; lon: number }) => {
+    setLocation(newLocation);
+    if (newCoords) {
+      setCoordinates(newCoords);
+    } else {
+      const locLower = newLocation.toLowerCase();
+      if (locLower.includes("jaipur")) {
+        setCoordinates({ lat: 26.9124, lon: 75.7873 });
+      } else if (locLower.includes("sanganer")) {
+        setCoordinates({ lat: 26.8197, lon: 75.7878 });
+      } else if (locLower.includes("chomu")) {
+        setCoordinates({ lat: 27.1706, lon: 75.7226 });
+      } else if (locLower.includes("phagi")) {
+        setCoordinates({ lat: 26.5779, lon: 75.5708 });
+      } else if (locLower.includes("nashik")) {
+        setCoordinates({ lat: 19.9975, lon: 73.7898 });
+      } else if (locLower.includes("ludhiana")) {
+        setCoordinates({ lat: 30.9010, lon: 75.8573 });
+      }
+    }
+    handleFieldChange();
+  };
+
+  const handleRunTests = () => {
+    const results = runIrrigationEngineTests();
+    setTestResults(results);
+  };
+
+  // Generic updater for farmer mode quick edits
+  const handleUpdateField = (updates: {
+    location?: string;
+    crop?: string;
+    growthStage?: string;
+    fieldArea?: number;
+    areaUnit?: LandAreaUnit;
+    soilType?: string;
+    irrigationMethod?: IrrigationMethodType;
+    waterBudgetLiters?: number;
+    flowRateLitersPerHour?: number;
+  }) => {
+    if (updates.location !== undefined) handleLocationChange(updates.location);
+    if (updates.crop !== undefined) setCrop(updates.crop);
+    if (updates.growthStage !== undefined) setGrowthStage(updates.growthStage);
+    if (updates.fieldArea !== undefined) setFieldArea(updates.fieldArea);
+    if (updates.areaUnit !== undefined) setAreaUnit(updates.areaUnit);
+    if (updates.soilType !== undefined) setSoilType(updates.soilType);
+    if (updates.irrigationMethod !== undefined) setIrrigationMethod(updates.irrigationMethod);
+    if (updates.waterBudgetLiters !== undefined) setWaterBudgetLiters(updates.waterBudgetLiters);
+    if (updates.flowRateLitersPerHour !== undefined) setFlowRateLitersPerHour(updates.flowRateLitersPerHour);
+    handleFieldChange();
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 4-Step Stepper Wizard matching Reference Screen 4 */}
-      <Card className="p-4 sm:p-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {steps.map((s) => {
-            const isCompleted = s.num < activeStep;
-            const isCurrent = s.num === activeStep;
+    <div className="w-full space-y-6 pb-12">
+      {/* ============================================================= */}
+      {/* TOP HEADER: 2-OPTION LANGUAGE SELECTOR & PRESETS */}
+      {/* ============================================================= */}
+      <Card className="p-4 sm:p-5 bg-gradient-to-r from-emerald-50/90 via-white to-sky-50/80 border-krishi-300 shadow-sm space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-krishi-700 text-white shadow-sm">
+              <Sprout className="h-6 w-6" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-base sm:text-lg font-black text-slate-900">
+                  {t.appTitle}
+                </h1>
+                <span className="text-[10px] bg-krishi-100 text-krishi-900 font-bold px-2 py-0.5 rounded-full border border-krishi-200">
+                  {t.appTag}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-0.5">
+                {t.appSubtitle}
+              </p>
+            </div>
+          </div>
 
-            return (
-              <div
-                key={s.num}
-                onClick={() => setActiveStep(s.num)}
-                className="flex items-center gap-3 cursor-pointer group"
+          {/* Visible Language Selector with 2 options only: हिंदी and English */}
+          <div className="flex items-center self-start lg:self-auto">
+            <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("hi")}
+                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  language === "hi"
+                    ? "bg-krishi-700 text-white font-black shadow-sm ring-2 ring-krishi-200"
+                    : "text-slate-700 hover:text-slate-900 hover:bg-slate-200/60"
+                }`}
+                title="हिंदी में बदलें (Switch to Hindi)"
+                aria-label="हिंदी भाषा चुनें"
               >
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all ${
-                    isCurrent
-                      ? "bg-krishi-700 text-white shadow-sm ring-4 ring-krishi-100"
-                      : isCompleted
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-slate-100 text-slate-400 group-hover:bg-slate-200"
+                <span>🇮🇳</span>
+                <span>हिंदी</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("en")}
+                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  language === "en"
+                    ? "bg-krishi-700 text-white font-black shadow-sm ring-2 ring-krishi-200"
+                    : "text-slate-700 hover:text-slate-900 hover:bg-slate-200/60"
+                }`}
+                title="Switch to English"
+                aria-label="Select English language"
+              >
+                <span>🇬🇧</span>
+                <span>English</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Benchmark Presets Row */}
+        <div className="pt-3 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <span className="font-bold text-slate-700 flex items-center gap-1">
+              <Sliders className="h-3.5 w-3.5 text-krishi-700" />
+              <span>{t.quickPresetsLabel}</span>
+            </span>
+
+            {DEMONSTRATION_PRESETS.map((p) => {
+              const isActive = activePresetId === p.id;
+              const presetLabel =
+                p.id === "jaipur-tomato-40k"
+                  ? t.presetJaipurTomato
+                  : p.id === "jaipur-wheat-deficit"
+                  ? t.presetJaipurWheat
+                  : p.id === "sanganer-chili-rain"
+                  ? t.presetSanganerChili
+                  : p.label;
+
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => applyPreset(p.id)}
+                  className={`min-h-[34px] px-3 py-1 rounded-xl text-xs font-bold transition-all border ${
+                    isActive
+                      ? "bg-krishi-700 text-white border-krishi-800 shadow-2xs"
+                      : "bg-white text-slate-700 border-slate-200 hover:border-krishi-400 hover:bg-slate-50"
                   }`}
                 >
-                  {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : s.num}
-                </div>
-                <div className="min-w-0">
-                  <span
-                    className={`block text-xs font-bold truncate ${
-                      isCurrent ? "text-krishi-800" : "text-slate-700"
-                    }`}
-                  >
-                    {s.title}
-                  </span>
-                  <span className="block text-[11px] text-slate-400 truncate">
-                    {s.sub}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+                  {p.isUserSpecifiedScenario ? "★ " : ""}
+                  {presetLabel}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleRunTests}
+            className="min-h-[34px] px-3 py-1 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 flex items-center gap-1.5 transition-all self-start sm:self-auto"
+            title="Run calculation engine invariant tests"
+          >
+            <TestTube2 className="h-3.5 w-3.5 text-slate-600" />
+            <span>{t.verifyEngineBtn}</span>
+          </button>
         </div>
+
+        {/* Engine Self-Verification Test Modal/Drawer */}
+        {testResults && (
+          <div className="pt-3 border-t border-slate-200 space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                {t.testsPassedNotice}
+              </span>
+              <button
+                type="button"
+                onClick={() => setTestResults(null)}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-800 px-2.5 py-1 rounded-md hover:bg-slate-100 transition-colors"
+              >
+                {t.dismissBtn}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs max-h-48 overflow-y-auto pr-1">
+              {testResults.map((tCase, idx) => (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-lg border flex items-center gap-2 ${
+                    tCase.passed
+                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                      : "bg-rose-50 border-rose-200 text-rose-900"
+                  }`}
+                >
+                  <span className="shrink-0 font-bold">{tCase.passed ? "✓" : "✗"}</span>
+                  <span className="truncate text-[11px]">{tCase.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
-      {/* Two Column Layout matching Reference Screen 4 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (5 Cols): Field Information Form */}
-        <div className="lg:col-span-5">
-          <Card className="p-6 space-y-4">
-            <h4 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Enter Field Information
-            </h4>
-
-            <div className="space-y-3.5">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Crop
-                  </label>
-                  <select
-                    value={crop}
-                    onChange={(e) => setCrop(e.target.value)}
-                    className="w-full h-10 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-krishi-500 focus:outline-none font-medium text-slate-800"
-                  >
-                    <option value="Tomato">Tomato</option>
-                    <option value="Wheat">Wheat</option>
-                    <option value="Chili">Chili</option>
-                    <option value="Potato">Potato</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Growth Stage
-                  </label>
-                  <select
-                    value={growthStage}
-                    onChange={(e) => setGrowthStage(e.target.value)}
-                    className="w-full h-10 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-krishi-500 focus:outline-none font-medium text-slate-800"
-                  >
-                    <option value="Flowering">Flowering</option>
-                    <option value="Vegetative">Vegetative</option>
-                    <option value="Fruit Formation">Fruit Formation</option>
-                    <option value="Grain Filling">Grain Filling</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Soil Type
-                  </label>
-                  <select
-                    value={soilType}
-                    onChange={(e) => setSoilType(e.target.value)}
-                    className="w-full h-10 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-krishi-500 focus:outline-none font-medium text-slate-800"
-                  >
-                    <option value="Loamy">Loamy</option>
-                    <option value="Sandy">Sandy</option>
-                    <option value="Clay">Clay</option>
-                    <option value="Black Soil">Black Soil</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">
-                    Last Irrigation Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={lastDate}
-                      onChange={(e) => setLastDate(e.target.value)}
-                      className="w-full h-10 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-krishi-500 focus:outline-none font-medium text-slate-800"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Field Location
-                </label>
-                <div className="relative flex items-center">
-                  <MapPin className="absolute left-3 h-4 w-4 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full h-10 pl-9 pr-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-krishi-500 focus:outline-none font-medium text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="w-full justify-center"
-                  rightIcon={<ArrowRight className="h-4 w-4" />}
-                >
-                  Get Irrigation Advice
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Right Column (7 Cols): Irrigation Recommendation Card */}
-        <div className="lg:col-span-7">
-          <Card className="p-6 space-y-5">
-            {/* Recommendation Header */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-base font-bold text-slate-900">
-                  Irrigation Recommendation
-                </h4>
-                <Badge variant="green" size="md">
-                  Moderate Need
-                </Badge>
-              </div>
-
-              <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-700 shadow-sm border border-emerald-200 text-2xl">
-                  🌱
-                </div>
-                <div className="space-y-1">
-                  <h5 className="text-base font-black text-krishi-900 leading-tight">
-                    {result.headline}
-                  </h5>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    {result.rationale}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 5-Day Weather Forecast Strip */}
-            <div>
-              <span className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">
-                5-Day Local Weather Outlook
-              </span>
-
-              <div className="grid grid-cols-5 gap-2">
-                {forecastDays.map((day, idx) => (
-                  <div
-                    key={day.day}
-                    className={`flex flex-col items-center p-2.5 rounded-xl border text-center transition-all ${
-                      idx === 0
-                        ? "bg-amber-50/70 border-amber-200"
-                        : "bg-slate-50/60 border-slate-200/80"
-                    }`}
-                  >
-                    <span className="text-[11px] font-bold text-slate-700">
-                      {day.day}
-                    </span>
-                    <div className="my-1 text-amber-500">
-                      {day.rainMm > 0 ? (
-                        <CloudRain className="h-4 w-4 text-sky-500" />
-                      ) : (
-                        <Sun className="h-4 w-4 text-amber-500" />
-                      )}
-                    </div>
-                    <span className="text-xs font-black text-slate-800">
-                      {day.tempMax}°C
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {day.rainMm} mm
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Practical Tip */}
-            <div className="flex items-start gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600">
-              <AlertCircle className="h-4 w-4 text-krishi-600 shrink-0 mt-0.5" />
-              <span>{result.tip}</span>
-            </div>
-          </Card>
-        </div>
-      </div>
+      {/* ============================================================= */}
+      {/* FARMER DASHBOARD (SINGLE CLEAN VIEW POWERED BY FAO-56 ENGINE) */}
+      {/* ============================================================= */}
+      <FarmerModeView
+        plan={plan}
+        activeSchedule={activeSchedule}
+        weather={weather}
+        weatherLoading={weatherLoading}
+        weatherError={weatherError}
+        weatherErrorMessage={weatherErrorMessage}
+        weatherLastUpdated={weatherLastUpdated}
+        onRefreshWeather={handleRefreshWeather}
+        location={location}
+        crop={crop}
+        growthStage={growthStage}
+        fieldArea={fieldArea}
+        areaUnit={areaUnit}
+        soilType={soilType}
+        irrigationMethod={irrigationMethod}
+        waterBudgetLiters={waterBudgetLiters}
+        flowRateLitersPerHour={flowRateLitersPerHour}
+        pumpingCalculation={pumpingCalculation}
+        onUpdateField={handleUpdateField}
+        onSelectLocation={handleLocationChange}
+        language={language}
+      />
     </div>
   );
 };
