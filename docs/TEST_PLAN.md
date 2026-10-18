@@ -1,8 +1,8 @@
-# KrishiSetu AI - Verification & Test Plan
+# AgroSaathi - Verification & Test Plan
 
 ## 1. Scope of Testing
 
-This test plan defines verification gates for the KrishiSetu AI foundation, dashboard shell, module placeholders, and subsequent feature implementations.
+This test plan defines verification gates for the AgroSaathi foundation, dashboard shell, module placeholders, and subsequent feature implementations.
 
 ---
 

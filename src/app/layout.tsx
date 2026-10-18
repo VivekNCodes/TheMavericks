@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   keywords: [
-    "KrishiSetu AI",
+    "AgroSaathi",
     "Smart Farming",
     "Crop Disease Detection",
     "Mandi Prices",

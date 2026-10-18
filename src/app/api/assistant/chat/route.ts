@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { generateChatbotResponse } from "@/features/chatbot/services/gemini-service";
 import { SupportedLanguage } from "@/i18n/translations";
+import { getServerFarmerSession } from "@/lib/auth";
+import { getUserAgriculturalContext } from "@/lib/user-store";
 
 // In-memory sliding-window rate limiter (25 requests per minute per IP)
 interface RateLimitBucket {
@@ -90,11 +92,28 @@ export async function POST(request: NextRequest) {
       return errorResponse("No valid messages found in request.", "BAD_REQUEST", 400);
     }
 
-    // 3. Generate Multilingual Grounded Gemini Response
+    // 3. Resolve authenticated user's agricultural profile and crop context
+    let userContext = null;
+    let effectiveLocation = farmerLocation;
+
+    try {
+      const sessionUser = await getServerFarmerSession();
+      if (sessionUser?.id) {
+        userContext = await getUserAgriculturalContext(sessionUser.id);
+        if (userContext?.location) {
+          effectiveLocation = userContext.location;
+        }
+      }
+    } catch (sessionErr) {
+      console.warn("Could not retrieve farmer context for assistant session:", sessionErr);
+    }
+
+    // 4. Generate Multilingual Grounded Gemini Response with User Context
     const responseData = await generateChatbotResponse(
       sanitizedMessages,
       targetLang,
-      farmerLocation
+      effectiveLocation,
+      userContext
     );
 
     return successResponse(responseData);

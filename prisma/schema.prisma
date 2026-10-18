@@ -1,4 +1,4 @@
-// KrishiSetu AI - Prisma Schema
+// AgroSaathi - Prisma Schema
 // Database Engine: Neon Serverless PostgreSQL
 
 datasource db {
@@ -22,23 +22,34 @@ enum UserRole {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  phone        String        @unique
-  fullName     String
-  role         UserRole      @default(FARMER)
-  state        String        @default("Rajasthan")
-  district     String        @default("Jaipur")
-  village      String?
-  avatarUrl    String?
-  isVerified   Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  googleId          String?       @unique
+  email             String?       @unique
+  phone             String?       @unique
+  fullName          String
+  preferredName     String?
+  preferredLanguage String        @default("en")
+  role              UserRole      @default(FARMER)
+  state             String        @default("Rajasthan")
+  district          String        @default("Jaipur")
+  village           String?
+  farmSize          Float?
+  farmSizeUnit      String        @default("acre")
+  soilType          String?
+  irrigationMethod  String?
+  farmingExperience Int?
+  avatarUrl         String?
+  isVerified        Boolean       @default(false)
+  lastLoginAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  crops        CropProfile[]
-  listings     MarketplaceListing[]
-  inquiries    MarketplaceInquiry[]
-  cropPlans    CropPlan[]
-  chatSessions ChatSession[]
+  crops             CropProfile[]
+  listings          MarketplaceListing[]
+  inquiries         MarketplaceInquiry[]
+  cropPlans         CropPlan[]
+  chatSessions      ChatSession[]
+  diseaseLogs       DiseaseLog[]
 
   @@map("users")
 }
@@ -57,22 +68,28 @@ enum GrowthStage {
 }
 
 model CropProfile {
-  id            String         @id @default(cuid())
-  userId        String
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cropName      String         // e.g. "Tomato", "Wheat", "Chili"
-  variety       String?        // e.g. "Abhinav F1", "HD-2967"
-  acreage       Float          // e.g. 1.2
-  growthStage   GrowthStage    @default(VEGETATIVE)
-  sowingDate    DateTime?
-  fieldLocation String?        // e.g. "Plot 2 - Jaipur North"
-  imageUrl      String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                  String         @id @default(cuid())
+  userId              String
+  user                User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cropName            String         // e.g. "Tomato", "Wheat", "Chili"
+  variety             String?        // e.g. "Abhinav F1", "HD-2967"
+  acreage             Float          // e.g. 1.2
+  growthStage         GrowthStage    @default(VEGETATIVE)
+  sowingDate          DateTime?
+  expectedHarvestDate DateTime?
+  fieldLocation       String?        // e.g. "Plot 2 - Jaipur North"
+  soilType            String?
+  irrigationType      String?
+  fertilizerNotes     String?
+  notes               String?
+  imageUrl            String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  diseaseLogs   DiseaseLog[]
-  irrigationLogs IrrigationLog[]
+  diseaseLogs         DiseaseLog[]
+  irrigationLogs      IrrigationLog[]
 
+  @@index([userId])
   @@map("crop_profiles")
 }
 
@@ -88,6 +105,8 @@ enum SeverityLevel {
 
 model DiseaseLog {
   id               String         @id @default(cuid())
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   cropProfileId    String?
   cropProfile      CropProfile?   @relation(fields: [cropProfileId], references: [id], onDelete: SetNull)
   imageUrl         String
@@ -102,6 +121,7 @@ model DiseaseLog {
   culturalControl  String?        // e.g. "Remove bottom leaves, improve airflow"
   createdAt        DateTime       @default(now())
 
+  @@index([userId, createdAt])
   @@map("disease_logs")
 }
 

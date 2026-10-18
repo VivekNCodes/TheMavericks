@@ -1,4 +1,4 @@
-# KrishiSetu AI - API Contracts & Communication Standards
+# AgroSaathi - API Contracts & Communication Standards
 
 ## 1. Global Response Envelope
 

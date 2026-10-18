@@ -92,7 +92,7 @@ export const CropPlanView: React.FC<CropPlanViewProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-krishi-700 uppercase tracking-wider">
-              KrishiSetu Growing Plan
+              AgroSaathi Growing Plan
             </span>
             <span className="text-slate-300">•</span>
             <span className="text-xs text-slate-500">
@@ -486,7 +486,7 @@ export const CropPlanView: React.FC<CropPlanViewProps> = ({
             </div>
             <p>{plan.waterBudget.methodGuidance}</p>
             <p className="text-[11px] text-slate-500 italic">
-              {plan.waterBudget.calculationMethodology} Note: KrishiSetu does not claim direct physical measurement of current soil moisture without field telemetry sensors.
+              {plan.waterBudget.calculationMethodology} Note: AgroSaathi does not claim direct physical measurement of current soil moisture without field telemetry sensors.
             </p>
           </div>
         </div>

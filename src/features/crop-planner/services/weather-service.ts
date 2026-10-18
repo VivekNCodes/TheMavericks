@@ -59,7 +59,7 @@ export async function searchLocations(query: string): Promise<LocationCoordinate
 
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "KrishiSetu-AI-CropPlanner/1.0" },
+      headers: { "User-Agent": "AgroSaathi-CropPlanner/1.0" },
     });
     clearTimeout(timeout);
 
@@ -115,7 +115,7 @@ export async function fetchWeatherOutlook(
 
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { "User-Agent": "KrishiSetu-AI-CropPlanner/1.0" },
+      headers: { "User-Agent": "AgroSaathi-CropPlanner/1.0" },
       next: { revalidate: 600 },
     });
     clearTimeout(timeout);

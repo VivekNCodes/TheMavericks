@@ -50,13 +50,13 @@ export const SavedPlansModal: React.FC<SavedPlansModalProps> = ({
         }
 
         // LocalStorage fallback
-        const local = localStorage.getItem("krishisetu_crop_plans");
+        const local = localStorage.getItem("agrosaathi_crop_plans") || localStorage.getItem("krishisetu_crop_plans");
         if (local) {
           setPlans(JSON.parse(local));
         }
       } catch (e) {
         console.warn("Could not fetch saved plans from API, reading localStorage:", e);
-        const local = localStorage.getItem("krishisetu_crop_plans");
+        const local = localStorage.getItem("agrosaathi_crop_plans") || localStorage.getItem("krishisetu_crop_plans");
         if (local) {
           try {
             setPlans(JSON.parse(local));
@@ -79,7 +79,7 @@ export const SavedPlansModal: React.FC<SavedPlansModalProps> = ({
       await fetch(`/api/crop-planner/save?id=${id}`, { method: "DELETE" });
       const updated = plans.filter((p) => p.id !== id);
       setPlans(updated);
-      localStorage.setItem("krishisetu_crop_plans", JSON.stringify(updated));
+      localStorage.setItem("agrosaathi_crop_plans", JSON.stringify(updated));
     } catch (err) {
       console.warn("Delete failed:", err);
     } finally {

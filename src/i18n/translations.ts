@@ -17,7 +17,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 export const translations = {
   en: {
     // Brand
-    brandName: "KrishiSetu AI",
+    brandName: "AgroSaathi",
     tagline: "Smart Farming, Brighter Futures",
 
     // Navigation
@@ -164,16 +164,16 @@ export const translations = {
     cpWaterBudgetTitle: "Crop Water Demand & Irrigation Schedule",
     cpCalendarTitle: "Growing Calendar & Field Operations Timeline",
     cpNutrientPlanTitle: "Nutrient Management Guidance (NPK)",
-    cpAdvisoryTitle: "KrishiSetu Agronomic Advisory",
+    cpAdvisoryTitle: "AgroSaathi Agronomic Advisory",
     cpSourcesTitle: "Scientific Sources & Citations",
     cpDisclaimerTitle: "Advisory Disclaimer",
     cpStageTillering: "Tillering / Branching",
 
     // AI Sahayak Chatbot
-    chatTitle: "KrishiSetu AI Sahayak",
+    chatTitle: "AgroSaathi AI Sahayak",
     chatSubtitle: "Indian Agriculture Specialist & Explanatory Agronomy Guide",
     chatPlaceholder: "Ask about crop diseases, fertilizers, weather, irrigation...",
-    chatDisclaimer: "KrishiSetu Sahayak is an educational AI advisor. For toxic chemical prescriptions, verify with your nearest KVK or agronomist.",
+    chatDisclaimer: "AgroSaathi Sahayak is an educational AI advisor. For toxic chemical prescriptions, verify with your nearest KVK or agronomist.",
     chatClearBtn: "Clear Chat",
     chatModelReady: "Gemini 1.5 Flash Connected",
     chatModelOffline: "ICAR Agronomy Engine (Offline)",
@@ -262,7 +262,7 @@ export const translations = {
 
   hi: {
     // Brand
-    brandName: "कृषिसेतु AI",
+    brandName: "एग्रोसाथी",
     tagline: "स्मार्ट खेती, समृद्ध किसान",
 
     // Navigation
@@ -409,16 +409,16 @@ export const translations = {
     cpWaterBudgetTitle: "फसल जल आवश्यकता एवं सिंचाई अनुसूची",
     cpCalendarTitle: "फसल विकास कैलेंडर एवं महत्वपूर्ण कार्य",
     cpNutrientPlanTitle: "पोषक तत्व प्रबंधन (एनपीके)",
-    cpAdvisoryTitle: "कृषिसेतु विशेष परामर्श",
+    cpAdvisoryTitle: "एग्रोसाथी विशेष परामर्श",
     cpSourcesTitle: "वैज्ञानिक संदर्भ एवं स्रोत",
     cpDisclaimerTitle: "परामर्श अस्वीकरण",
     cpStageTillering: "कल्ले फूटना / शाखाएं निकलना",
 
     // AI Sahayak Chatbot
-    chatTitle: "कृषिसेतु एआई सहायक",
+    chatTitle: "एग्रोसाथी एआई सहायक",
     chatSubtitle: "भारतीय कृषि विशेषज्ञ एवं व्याख्यात्मक परामर्शदाता",
     chatPlaceholder: "फसल रोग, खाद, सिंचाई, मौसम या मंडी के बारे में पूछें...",
-    chatDisclaimer: "कृषिसेतु सहायक एक शैक्षिक मार्गदर्शक है। कीटनाशक छिड़काव से पहले नजदीकी कृषि विज्ञान केंद्र (KVK) से परामर्श लें।",
+    chatDisclaimer: "एग्रोसाथी सहायक एक शैक्षिक मार्गदर्शक है। कीटनाशक छिड़काव से पहले नजदीकी कृषि विज्ञान केंद्र (KVK) से परामर्श लें।",
     chatClearBtn: "चैट मिटाएं",
     chatModelReady: "जेमिनी 1.5 फ्लैश कनेक्टेड",
     chatModelOffline: "आईसीएआर कृषि विज्ञान इंजन (ऑफ़लाइन)",
@@ -507,7 +507,7 @@ export const translations = {
 
   mr: {
     // Brand
-    brandName: "कृषीसेतू AI",
+    brandName: "ॲग्रोसाथी",
     tagline: "स्मार्ट शेती, समृद्ध शेतकरी",
 
     // Navigation
@@ -654,16 +654,16 @@ export const translations = {
     cpWaterBudgetTitle: "पाण्याची गरज आणि सिंचन वेळापत्रक",
     cpCalendarTitle: "पीक वाढीचे टप्पे आणि शेती कामे",
     cpNutrientPlanTitle: "खत व्यवस्थापन मार्गदर्शन (NPK)",
-    cpAdvisoryTitle: "कृषीसेतू विशेष सल्ला",
+    cpAdvisoryTitle: "ॲग्रोसाथी विशेष सल्ला",
     cpSourcesTitle: "वैज्ञानिक संदर्भ आणि स्रोत",
     cpDisclaimerTitle: "सल्लागार अस्वीकरण",
     cpStageTillering: "फुटवे फुटण्याची अवस्था",
 
     // AI Sahayak Chatbot
-    chatTitle: "कृषीसेतू एआय सहाय्यक",
+    chatTitle: "ॲग्रोसाथी एआय सहाय्यक",
     chatSubtitle: "भारतीय कृषी तज्ज्ञ आणि मार्गदर्शक",
     chatPlaceholder: "पिकांचे रोग, खते, सिंचन, हवामानाबद्दल विचारा...",
-    chatDisclaimer: "कृषीसेतू सहाय्यक एक शैक्षणिक सल्लागार आहे. कीटकनाशकांच्या वापरापूर्वी जवळच्या कृषी विज्ञान केंद्राचा सल्ला घ्या.",
+    chatDisclaimer: "ॲग्रोसाथी सहाय्यक एक शैक्षणिक सल्लागार आहे. कीटकनाशकांच्या वापरापूर्वी जवळच्या कृषी विज्ञान केंद्राचा सल्ला घ्या.",
     chatClearBtn: "संभाषण पुसा",
     chatModelReady: "जेमिनी 1.5 फ्लॅश कनेक्टेड",
     chatModelOffline: "आयसीएआर कृषी विज्ञान इंजिन (ऑफलाइन)",
@@ -752,7 +752,7 @@ export const translations = {
 
   pa: {
     // Brand
-    brandName: "ਕ੍ਰਿਸ਼ੀਸੇਤੂ AI",
+    brandName: "ਐਗਰੋਸਾਥੀ",
     tagline: "ਸਮਾਰਟ ਖੇਤੀ, ਖੁਸ਼ਹਾਲ ਕਿਸਾਨ",
 
     // Navigation
@@ -899,16 +899,16 @@ export const translations = {
     cpWaterBudgetTitle: "ਫ਼ਸਲ ਲਈ ਪਾਣੀ ਦੀ ਲੋੜ ਅਤੇ ਸਿੰਚਾਈ ਸਮਾਂ-ਸਾਰਣੀ",
     cpCalendarTitle: "ਫ਼ਸਲ ਵਾਧੇ ਦਾ ਕੈਲੰਡਰ ਅਤੇ ਖੇਤੀ ਕੰਮ",
     cpNutrientPlanTitle: "ਖ਼ਾਦ ਪ੍ਰਬੰਧਨ ਸਲਾਹ (NPK)",
-    cpAdvisoryTitle: "ਕ੍ਰਿਸ਼ੀਸੇਤੂ ਵਿਸ਼ੇਸ਼ ਸਲਾਹ",
+    cpAdvisoryTitle: "ਐਗਰੋਸਾਥੀ ਵਿਸ਼ੇਸ਼ ਸਲਾਹ",
     cpSourcesTitle: "ਵਿਗਿਆਨਕ ਸਰੋਤ ਅਤੇ ਹਵਾਲੇ",
     cpDisclaimerTitle: "ਸਲਾਹਕਾਰੀ ਬੇਦਾਅਵਾ",
     cpStageTillering: "ਬੂਟਾ ਫੁੱਟਣ ਦੀ ਅਵਸਥਾ",
 
     // AI Sahayak Chatbot
-    chatTitle: "ਕ੍ਰਿਸ਼ੀਸੇਤੂ ਏਆਈ ਸਹਾਇਕ",
+    chatTitle: "ਐਗਰੋਸਾਥੀ ਏਆਈ ਸਹਾਇਕ",
     chatSubtitle: "ਭਾਰਤੀ ਖੇਤੀਬਾੜੀ ਮਾਹਰ ਅਤੇ ਸਲਾਹਕਾਰ",
     chatPlaceholder: "ਫ਼ਸਲੀ ਬਿਮਾਰੀਆਂ, ਖਾਦਾਂ, ਸਿੰਚਾਈ, ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ...",
-    chatDisclaimer: "ਕ੍ਰਿਸ਼ੀਸੇਤੂ ਸਹਾਇਕ ਇੱਕ ਸਿੱਖਿਆਤਮਕ ਸਲਾਹਕਾਰ ਹੈ। ਕੀਟਨਾਸ਼ਕਾਂ ਲਈ ਆਪਣੇ ਨਜ਼ਦੀਕੀ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ (KVK) ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
+    chatDisclaimer: "ਐਗਰੋਸਾਥੀ ਸਹਾਇਕ ਇੱਕ ਸਿੱਖਿਆਤਮਕ ਸਲਾਹਕਾਰ ਹੈ। ਕੀਟਨਾਸ਼ਕਾਂ ਲਈ ਆਪਣੇ ਨਜ਼ਦੀਕੀ ਕ੍ਰਿਸ਼ੀ ਵਿਗਿਆਨ ਕੇਂਦਰ (KVK) ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
     chatClearBtn: "ਗੱਲਬਾਤ ਸਾਫ਼ ਕਰੋ",
     chatModelReady: "ਜੈਮਿਨੀ 1.5 ਫਲੈਸ਼ ਕਨੈਕਟਡ",
     chatModelOffline: "ਆਈਸੀਏਆਰ ਖੇਤੀਬਾੜੀ ਇੰਜਣ (ਆਫ਼ਲਾਈਨ)",

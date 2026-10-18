@@ -1,8 +1,8 @@
-# KrishiSetu AI - System Architecture
+# AgroSaathi - System Architecture
 
 ## 1. Architectural Philosophy
 
-KrishiSetu AI follows a **Modular Monolith** pattern built upon the **Next.js 14 App Router**. 
+AgroSaathi follows a **Modular Monolith** pattern built upon the **Next.js 14 App Router**. 
 The repository is structured to enable independent feature development by different team members while enforcing centralized integration for shared layout, data access contracts, theme tokens, and authentication shells.
 
 ```

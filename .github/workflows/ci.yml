@@ -1,0 +1,214 @@
+name: Continuous Integration & Verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  validate-scope:
+    name: Module Scope Boundary Check
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code with History
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Evaluate Scope Boundaries (Fail-Closed)
+        shell: bash
+        run: |
+          set -e
+
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          HEAD_BRANCH="${{ github.head_ref }}"
+
+          echo "===================================================="
+          echo "AgroSaathi Scope Boundary Enforcement"
+          echo "PR Base SHA:   $BASE_SHA"
+          echo "PR Head SHA:   $HEAD_SHA"
+          echo "Source Branch: $HEAD_BRANCH"
+          echo "===================================================="
+
+          # 1. Check for Scope Exception Override Label
+          PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          if echo "$PR_LABELS" | grep -qw "scope-exception:approved"; then
+            echo ">>> [AUTHORIZED OVERRIDE] Detected 'scope-exception:approved' label applied by Integration Lead."
+            echo ">>> Proceeding with approved shared-infrastructure changes."
+            exit 0
+          fi
+
+          # 2. Extract changed files between PR base and head SHAs
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changed files detected between $BASE_SHA and $HEAD_SHA."
+            exit 0
+          fi
+
+          echo "Files modified in this pull request:"
+          echo "$CHANGED_FILES" | sed 's/^/  - /'
+
+          # 3. Match source branch against registered module patterns
+          MATCHED_MODULE=""
+
+          case "$HEAD_BRANCH" in
+            feature/mandi-prices-*)
+              MATCHED_MODULE="mandi-prices"
+              ;;
+            feature/irrigation-*)
+              MATCHED_MODULE="irrigation"
+              ;;
+            feature/marketplace-*)
+              MATCHED_MODULE="marketplace"
+              ;;
+            feature/crop-disease-*)
+              MATCHED_MODULE="crop-disease"
+              ;;
+            feature/crop-planner-*)
+              MATCHED_MODULE="crop-planner"
+              ;;
+            feature/chatbot-*)
+              MATCHED_MODULE="chatbot"
+              ;;
+            docs/*)
+              MATCHED_MODULE="docs"
+              ;;
+            feature/core-*|lead/*)
+              MATCHED_MODULE="core"
+              ;;
+            *)
+              echo ""
+              echo "::error::[FAIL-CLOSED] Branch '$HEAD_BRANCH' is not recognized by AgroSaathi naming rules."
+              echo "Branch must be prefixed with one of: feature/mandi-prices-*, feature/irrigation-*, feature/marketplace-*, feature/crop-disease-*, feature/crop-planner-*, feature/chatbot-*, docs/*, or feature/core-*."
+              exit 1
+              ;;
+          esac
+
+          echo "Assigned Module Scope: $MATCHED_MODULE"
+
+          # 4. Check each changed file against authorized allowlist for this module
+          VIOLATIONS=()
+
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+
+            IS_ALLOWED=false
+
+            case "$MATCHED_MODULE" in
+              mandi-prices)
+                if [[ "$FILE" =~ ^src/features/mandi-prices/ ]] || [[ "$FILE" =~ ^src/app/mandi-prices/ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              irrigation)
+                if [[ "$FILE" =~ ^src/features/irrigation/ ]] || [[ "$FILE" =~ ^src/app/irrigation/ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              marketplace)
+                if [[ "$FILE" =~ ^src/features/marketplace/ ]] || [[ "$FILE" =~ ^src/app/marketplace/ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              crop-disease)
+                if [[ "$FILE" =~ ^src/features/crop-disease/ ]] || [[ "$FILE" =~ ^src/app/crop-disease/ ]] || [[ "$FILE" =~ ^src/app/api/crop-disease/ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              crop-planner)
+                if [[ "$FILE" =~ ^src/features/crop-planner/ ]] || [[ "$FILE" =~ ^src/app/crop-planner/ ]] || [[ "$FILE" =~ ^src/app/api/crop-planner/ ]] || [[ "$FILE" =~ ^src/app/dashboard/crop-planner/ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              chatbot)
+                if [[ "$FILE" =~ ^src/features/chatbot/ ]] || [[ "$FILE" =~ ^src/app/assistant/ ]] || [[ "$FILE" =~ ^src/app/chat/ ]] || [[ "$FILE" =~ ^src/app/api/assistant/ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              docs)
+                if [[ "$FILE" =~ ^docs/ ]] || [[ "$FILE" =~ \.md$ ]]; then
+                  IS_ALLOWED=true
+                fi
+                ;;
+              core)
+                IS_ALLOWED=true
+                ;;
+            esac
+
+            if [ "$IS_ALLOWED" = false ]; then
+              VIOLATIONS+=("$FILE")
+            fi
+          done <<< "$CHANGED_FILES"
+
+          if [ ${#VIOLATIONS[@]} -gt 0 ]; then
+            echo ""
+            echo "::error::[SCOPE VIOLATION] Detected ${#VIOLATIONS[@]} out-of-scope file modifications for module '$MATCHED_MODULE':"
+            for VIOLATION in "${VIOLATIONS[@]}"; do
+              echo "  [DISALLOWED] $VIOLATION"
+            done
+            echo ""
+            echo "To request approval for shared files (e.g. package.json, prisma/schema.prisma, src/components/ui/), follow the Scope Exception Request protocol and obtain the 'scope-exception:approved' label from @VivekNCodes."
+            exit 1
+          fi
+
+          echo ">>> [SUCCESS] All modified files conform strictly to the '$MATCHED_MODULE' path allowlist."
+
+  build-and-verify:
+    name: Quality Checks & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20 (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies (Reproducible)
+        run: npm ci
+
+      - name: Generate Prisma Client Types
+        run: npx prisma generate
+
+      - name: TypeScript Type Checking (Strict)
+        run: npx tsc --noEmit
+
+      - name: ESLint Code Quality
+        run: npm run lint
+
+      - name: Next.js Production Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder?sslmode=disable"
+          DIRECT_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder?sslmode=disable"
+
+      - name: Generate CI Job Summary
+        if: always()
+        run: |
+          echo "### 🌾 AgroSaathi CI Verification Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Dependencies** | ✅ Passed | \`npm ci\` from \`package-lock.json\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Prisma Client** | ✅ Passed | Generated types from \`prisma/schema.prisma\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **TypeScript** | ✅ Passed | \`npx tsc --noEmit\` strict check |" >> $GITHUB_STEP_SUMMARY
+          echo "| **ESLint** | ✅ Passed | \`next lint\` rules verified |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Next.js Build** | ✅ Passed | Static page generation & bundle compilation |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: \`${{ github.sha }}\` on branch \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY

@@ -1,6 +1,6 @@
 export const siteConfig = {
-  name: "KrishiSetu AI",
-  shortName: "KrishiSetu",
+  name: "AgroSaathi",
+  shortName: "AgroSaathi",
   tagline: "Smart Farming, Brighter Futures",
   description:
     "An integrated agricultural intelligence platform uniting crop disease detection, mandi price intelligence, smart irrigation guidance, and direct farmer-to-buyer marketplace.",

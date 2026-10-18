@@ -1,6 +1,6 @@
-# AGENTS.md - Multi-Agent & Contributor Protocol for KrishiSetu AI
+# AGENTS.md - Multi-Agent & Contributor Protocol for AgroSaathi
 
-Welcome AI Agents and Developers working on **KrishiSetu AI (TheMavericks)**.
+Welcome AI Agents and Developers working on **AgroSaathi (TheMavericks)**.
 
 You must follow these strict collaboration guidelines to maintain code quality, prevent merge conflicts, and preserve architectural integrity.
 
