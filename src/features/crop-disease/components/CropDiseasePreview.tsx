@@ -716,10 +716,10 @@ export const CropDiseasePreview: React.FC = () => {
                 </div>
 
                 {/* Button Action */}
-                <div className="pt-2">
+                <div className="pt-2 flex flex-wrap items-center gap-3">
                   <Button
                     variant="primary"
-                    size="md"
+                    size="sm"
                     onClick={() => {
                       if (fileInputRef.current) {
                         fileInputRef.current.click();
@@ -729,6 +729,20 @@ export const CropDiseasePreview: React.FC = () => {
                   >
                     Upload Real Leaf Image for Inference
                   </Button>
+
+                  <Link
+                    href={`/assistant?q=${encodeURIComponent(
+                      `What are the best organic and chemical treatments for ${currentPreset.crop} ${currentPreset.condition}?`
+                    )}`}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      leftIcon={<MessageSquare className="h-4 w-4" />}
+                    >
+                      Ask AI Sahayak About Remedies
+                    </Button>
+                  </Link>
                 </div>
 
                 {/* Disclaimer */}
