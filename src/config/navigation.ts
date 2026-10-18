@@ -8,6 +8,7 @@ import {
   HelpCircle,
   CalendarRange,
   Bot,
+  GraduationCap,
 } from "lucide-react";
 import type { NavItem } from "@/types/navigation";
 
@@ -29,6 +30,12 @@ export const primaryNavItems: NavItem[] = [
     label: "AI Assistant",
     href: "/assistant",
     icon: Bot,
+  },
+  {
+    id: "expert-connect",
+    label: "Expert Connect",
+    href: "/expert-connect",
+    icon: GraduationCap,
   },
   {
     id: "crop-planner",

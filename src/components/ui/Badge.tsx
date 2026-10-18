@@ -2,7 +2,18 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "green" | "amber" | "blue" | "red" | "neutral" | "live";
+  variant?:
+    | "green"
+    | "amber"
+    | "blue"
+    | "red"
+    | "neutral"
+    | "live"
+    | "success"
+    | "warning"
+    | "info"
+    | "danger"
+    | "outline";
   size?: "sm" | "md";
   dot?: boolean;
 }
@@ -27,6 +38,11 @@ export const Badge: React.FC<BadgeProps> = ({
     red: "bg-red-100 text-red-800 border border-red-200",
     neutral: "bg-slate-100 text-slate-700 border border-slate-200",
     live: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    success: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    warning: "bg-amber-50 text-amber-800 border border-amber-200",
+    info: "bg-sky-50 text-sky-800 border border-sky-200",
+    danger: "bg-red-50 text-red-700 border border-red-200",
+    outline: "bg-transparent text-slate-700 border border-slate-300",
   };
 
   return (
@@ -47,13 +63,13 @@ export const Badge: React.FC<BadgeProps> = ({
           <span
             className={cn(
               "relative inline-flex rounded-full h-2 w-2",
-              variant === "live" || variant === "green"
+              variant === "live" || variant === "green" || variant === "success"
                 ? "bg-emerald-500"
-                : variant === "amber"
+                : variant === "amber" || variant === "warning"
                 ? "bg-amber-500"
-                : variant === "blue"
+                : variant === "blue" || variant === "info"
                 ? "bg-sky-500"
-                : variant === "red"
+                : variant === "red" || variant === "danger"
                 ? "bg-red-500"
                 : "bg-slate-500"
             )}

@@ -17,7 +17,9 @@ import {
   Cpu,
   Layers,
   MessageSquare,
+  GraduationCap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -38,6 +40,7 @@ interface PresetSample {
 }
 
 export const CropDiseasePreview: React.FC = () => {
+  const router = useRouter();
   // Preset demo samples
   const samples: PresetSample[] = [
     {
@@ -584,7 +587,36 @@ export const CropDiseasePreview: React.FC = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="pt-2 flex flex-wrap items-center gap-3">
+                <div className="pt-2 flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const draft = {
+                        cropName: modelResult.crop,
+                        consultationReason: "Verify my AI recommendation",
+                        symptomsDescription: `AI model diagnosed ${modelResult.crop} with ${modelResult.condition} (${modelResult.confidence}% confidence). Pathology: ${modelResult.summary}`,
+                        imageUrls: previewImage ? [previewImage] : [],
+                        aiSnapshot: {
+                          source: "crop-disease",
+                          diseaseName: modelResult.condition,
+                          scientificName: modelResult.scientificName,
+                          confidence: modelResult.confidence,
+                          recommendation: modelResult.recommendedActions.join("; "),
+                          reasoning: modelResult.summary,
+                          model: "PyTorch ResNet50-DCBAM Pathologist",
+                        },
+                      };
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("agrosaathi_expert_draft", JSON.stringify(draft));
+                      }
+                      router.push("/expert-connect?source=crop-disease");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-950 border border-amber-300 text-xs font-bold transition-all shadow-xs"
+                  >
+                    <GraduationCap className="h-4 w-4 text-amber-700" />
+                    <span>Not sure about this diagnosis? Consult an Expert</span>
+                  </button>
+
                   <Link
                     href={`/assistant?q=${encodeURIComponent(
                       `What are the best organic and chemical treatments for ${modelResult.crop} ${modelResult.condition}?`
@@ -716,7 +748,35 @@ export const CropDiseasePreview: React.FC = () => {
                 </div>
 
                 {/* Button Action */}
-                <div className="pt-2">
+                <div className="pt-2 flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const draft = {
+                        cropName: currentPreset.crop,
+                        consultationReason: "Verify my AI recommendation",
+                        symptomsDescription: `Pathology check on ${currentPreset.crop} - ${currentPreset.condition} (${currentPreset.confidence}% sample confidence). Symptoms: ${currentPreset.summary}`,
+                        aiSnapshot: {
+                          source: "crop-disease",
+                          diseaseName: currentPreset.condition,
+                          scientificName: currentPreset.scientificName,
+                          confidence: currentPreset.confidence,
+                          recommendation: currentPreset.actions.join("; "),
+                          reasoning: currentPreset.summary,
+                          model: "AgroSaathi Pathology Benchmark",
+                        },
+                      };
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("agrosaathi_expert_draft", JSON.stringify(draft));
+                      }
+                      router.push("/expert-connect?source=crop-disease");
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 hover:bg-amber-100 text-amber-950 border border-amber-300 text-xs font-bold transition-all shadow-xs"
+                  >
+                    <GraduationCap className="h-4 w-4 text-amber-700" />
+                    <span>Not sure about this diagnosis? Consult an Expert</span>
+                  </button>
+
                   <Button
                     variant="primary"
                     size="md"

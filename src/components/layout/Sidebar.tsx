@@ -31,6 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className, onNavigate }) => {
         return t("navDashboard");
       case "assistant":
         return t("navAssistant");
+      case "expert-connect":
+        return t("navExpertConnect");
       case "crop-planner":
         return t("navCropPlanner");
       case "crop-health":

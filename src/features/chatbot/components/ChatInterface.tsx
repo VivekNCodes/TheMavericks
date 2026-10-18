@@ -17,7 +17,9 @@ import {
   MapPin,
   ExternalLink,
   X,
+  GraduationCap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -42,6 +44,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 }) => {
   const { language, setLanguage, languages, t } = useLanguage();
   const { user } = useAuth();
+  const router = useRouter();
 
   // Chat conversation state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -358,6 +361,48 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         <span>{citation}</span>
                       </span>
                     ))}
+                  </div>
+                )}
+
+                {/* Consult an Expert Action Button */}
+                {!isUser && !msg.isError && msg.id !== "msg-welcome" && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const lastUserMsg = messages
+                          .slice(0, messages.findIndex((m) => m.id === msg.id))
+                          .reverse()
+                          .find((m) => m.role === "user");
+
+                        const draft = {
+                          cropName: "Tomato",
+                          consultationReason: "Verify my AI recommendation",
+                          symptomsDescription:
+                            lastUserMsg?.content ||
+                            "Seeking second opinion on AI agricultural assistant recommendation.",
+                          aiSnapshot: {
+                            source: "assistant",
+                            recommendation: msg.content,
+                            reasoning: msg.groundings?.join(", "),
+                            model: msg.mode || "gemini-live",
+                          },
+                        };
+
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem(
+                            "agrosaathi_expert_draft",
+                            JSON.stringify(draft)
+                          );
+                        }
+                        if (onClose) onClose();
+                        router.push("/expert-connect?source=assistant");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200/80 text-[11px] font-bold transition-all shadow-2xs group"
+                    >
+                      <GraduationCap className="h-3.5 w-3.5 text-amber-700 group-hover:scale-110 transition-transform" />
+                      <span>Not sure about this advice? Consult an Expert</span>
+                    </button>
                   </div>
                 )}
 

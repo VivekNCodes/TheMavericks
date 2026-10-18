@@ -30,6 +30,7 @@ export const translations = {
     navSettings: "Settings",
     navHelpSupport: "Help & Support",
     navCropPlanner: "Crop Planner",
+    navExpertConnect: "Expert Connect",
 
     // Header
     selectLocation: "Select Mandi Region",
@@ -51,6 +52,7 @@ export const translations = {
     qaIrrigationForecast: "Irrigation Forecast",
     qaSellProduce: "Sell Produce",
     qaCropPlanner: "Plan Crop Sowing",
+    qaExpertConnect: "Consult an Expert",
 
     // Welcome Banner
     greetingMorning: "Good Morning",
@@ -195,6 +197,7 @@ export const translations = {
     navSettings: "सेटिंग्स",
     navHelpSupport: "मदद और सहायता",
     navCropPlanner: "फसल योजनाकार",
+    navExpertConnect: "विशेषज्ञ परामर्श",
 
     // Header
     selectLocation: "मंडी क्षेत्र चुनें",
@@ -216,6 +219,7 @@ export const translations = {
     qaIrrigationForecast: "सिंचाई पूर्वानुमान",
     qaSellProduce: "फसल बेचें",
     qaCropPlanner: "बुवाई योजना बनाएं",
+    qaExpertConnect: "कृषि विशेषज्ञ से पूछें",
 
     // Welcome Banner
     greetingMorning: "शुभ प्रभात",
@@ -360,6 +364,7 @@ export const translations = {
     navSettings: "सेटिंग्ज",
     navHelpSupport: "मदत आणि पाठबळ",
     navCropPlanner: "पीक नियोजन",
+    navExpertConnect: "तज्ज्ञ सल्लागार",
 
     // Header
     selectLocation: "बाजार समिती निवडा",
@@ -381,6 +386,7 @@ export const translations = {
     qaIrrigationForecast: "सिंचन अंदाज",
     qaSellProduce: "माल विका",
     qaCropPlanner: "लागवड नियोजन करा",
+    qaExpertConnect: "तज्ज्ञांचा सल्ला घ्या",
 
     // Welcome Banner
     greetingMorning: "शुभ सकाळ",
@@ -525,6 +531,7 @@ export const translations = {
     navSettings: "ਸੈਟਿੰਗਾਂ",
     navHelpSupport: "ਮਦਦ ਅਤੇ ਸਹਾਇਤਾ",
     navCropPlanner: "ਫ਼ਸਲ ਯੋਜਨਾਕਾਰ",
+    navExpertConnect: "ਮਾਹਿਰ ਸਲਾਹਕਾਰ",
 
     // Header
     selectLocation: "ਮੰਡੀ ਖੇਤਰ ਚੁਣੋ",
@@ -546,6 +553,7 @@ export const translations = {
     qaIrrigationForecast: "ਸਿੰਚਾਈ ਅਨੁਮਾਨ",
     qaSellProduce: "ਫ਼ਸਲ ਵੇਚੋ",
     qaCropPlanner: "ਬਿਜਾਈ ਯੋਜਨਾ ਬਣਾਓ",
+    qaExpertConnect: "ਖੇਤੀ ਮਾਹਿਰ ਨਾਲ ਗੱਲ ਕਰੋ",
 
     // Welcome Banner
     greetingMorning: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
