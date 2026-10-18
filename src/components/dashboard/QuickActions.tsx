@@ -10,6 +10,7 @@ import {
   PhoneCall,
   CalendarRange,
   Bot,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useLanguage } from "@/context/LanguageContext";
@@ -19,6 +20,17 @@ export const QuickActions: React.FC = () => {
 
   return (
     <div className="flex items-center gap-2.5 overflow-x-auto pb-1 scrollbar-none">
+      <Link href="/expert-connect">
+        <Button
+          size="sm"
+          variant="outline"
+          className="rounded-full text-xs shrink-0 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 text-amber-950 font-bold hover:bg-amber-100 shadow-sm"
+          leftIcon={<GraduationCap className="h-3.5 w-3.5 text-amber-700" />}
+        >
+          {t("qaExpertConnect")}
+        </Button>
+      </Link>
+
       <Link href="/assistant">
         <Button
           size="sm"

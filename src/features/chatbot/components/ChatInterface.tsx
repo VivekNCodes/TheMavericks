@@ -16,6 +16,9 @@ import {
   CheckCircle2,
   MapPin,
   X,
+  GraduationCap,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
   Mic,
   MicOff,
   Volume2,
@@ -51,6 +54,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const router = useRouter();
   const { language, setLanguage, languages, t } = useLanguage();
   const { user } = useAuth();
+  const router = useRouter();
 
   // Chat conversation state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -497,6 +501,55 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 )}
 
+                {/* Consult an Expert Action Button */}
+                {!isUser && !msg.isError && msg.id !== "msg-welcome" && (
+                  <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const lastUserMsg = messages
+                          .slice(0, messages.findIndex((m) => m.id === msg.id))
+                          .reverse()
+                          .find((m) => m.role === "user");
+
+                        const draft = {
+                          cropName: "Tomato",
+                          consultationReason: "Verify my AI recommendation",
+                          symptomsDescription:
+                            lastUserMsg?.content ||
+                            "Seeking second opinion on AI agricultural assistant recommendation.",
+                          aiSnapshot: {
+                            source: "assistant",
+                            recommendation: msg.content,
+                            reasoning: msg.groundings?.join(", "),
+                            model: msg.mode || "gemini-live",
+                          },
+                        };
+
+                        if (typeof window !== "undefined") {
+                          sessionStorage.setItem(
+                            "agrosaathi_expert_draft",
+                            JSON.stringify(draft)
+                          );
+                        }
+                        if (onClose) onClose();
+                        router.push("/expert-connect?source=assistant");
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200/80 text-[11px] font-bold transition-all shadow-2xs group"
+                    >
+                      <GraduationCap className="h-3.5 w-3.5 text-amber-700 group-hover:scale-110 transition-transform" />
+                      <span>Not sure about this advice? Consult an Expert</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Timestamp */}
+                <div
+                  className={`text-[10px] mt-1.5 text-right font-medium ${
+                    isUser ? "text-emerald-200/70" : "text-slate-400"
+                  }`}
+                >
+                  {msg.timestamp}
                 {/* Bubble Footer: Timestamp & Speech Trigger */}
                 <div className="flex items-center justify-between mt-2 pt-1">
                   {!isUser && ttsSupported && (

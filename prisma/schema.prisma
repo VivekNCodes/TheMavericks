@@ -51,6 +51,7 @@ model User {
   orders       MarketplaceOrder[]
   cropPlans    CropPlan[]
   chatSessions ChatSession[]
+  consultations ConsultationCase[]
 
   @@map("users")
 }
@@ -339,3 +340,110 @@ model ChatSession {
   @@index([userId, createdAt])
   @@map("chat_sessions")
 }
+
+// ------------------------------------------------------
+// Module 7: Mavericks Expert Connect
+// ------------------------------------------------------
+enum ConsultationStatus {
+  DRAFT
+  PENDING
+  ACCEPTED
+  IN_PROGRESS
+  RESPONDED
+  RESOLVED
+  DECLINED
+  CANCELLED
+}
+
+enum ExpertStance {
+  AGREES
+  MODIFIES
+  DISAGREES
+}
+
+model AgriculturalExpert {
+  id               String   @id @default(cuid())
+  fullName         String
+  designation      String   // e.g. "Senior Plant Pathologist"
+  institution      String   // e.g. "ICAR - Rajasthan Agricultural Research Institute (RARI)"
+  specializations  String[] // e.g. ["Crop Pathology", "Fungicides", "Tomato Blight"]
+  languages        String[] // e.g. ["Hindi", "English", "Rajasthani"]
+  state            String   @default("Rajasthan")
+  district         String   @default("Jaipur")
+  experienceYears  Int      @default(12)
+  avatarUrl        String?
+  isVerified       Boolean  @default(true)
+  rating           Float    @default(4.9)
+  totalCasesSolved Int      @default(320)
+  availability     String   @default("Available Today")
+  bio              String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  cases            ConsultationCase[]
+
+  @@map("agricultural_experts")
+}
+
+model ConsultationCase {
+  id                  String             @id // Format: EXP-2026-XXXX
+  userId              String?
+  user                User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  farmerName          String             @default("Guest Farmer")
+  farmerPhone         String?
+  farmerLocation      String             @default("Jaipur, Rajasthan")
+  preferredLanguage   String             @default("en")
+
+  cropName            String             // e.g. "Tomato"
+  growthStage         String?            // e.g. "Vegetative", "Flowering"
+  consultationReason  String             // e.g. "Verify AI Recommendation"
+  symptomsDescription String             // Farmer problem text
+  symptomDuration     String?            // e.g. "3-5 days"
+  imageUrls           String[]           // Array of data URLs or image paths
+
+  // AI Recommendation Snapshot (preserved at time of request)
+  aiSource            String?            // "assistant" | "crop-disease" | "none"
+  aiRecommendation    String?            // Text of AI advice
+  aiReasoning         String?            // ICAR grounding citations / symptoms
+  aiConfidence        Float?             // Genuine model confidence percentage (e.g. 88.0)
+
+  // Supporting Farm Telemetry Snapshot
+  weatherSnapshot     Json?              // Temp, humidity, rain forecast
+  soilType            String?            // e.g. "Sandy Loam"
+  irrigationStatus    String?            // e.g. "Irrigated 2 days ago"
+
+  // Approved Report Snapshot
+  approvedReport      Json?              // Farmer approved case snapshot
+  farmerConsentAt     DateTime?
+
+  // Assigned Expert
+  expertId            String
+  expert              AgriculturalExpert @relation(fields: [expertId], references: [id], onDelete: Restrict)
+
+  // Status and Timeline
+  status              ConsultationStatus @default(PENDING)
+  submittedAt         DateTime           @default(now())
+  acceptedAt          DateTime?
+  respondedAt         DateTime?
+  resolvedAt          DateTime?
+
+  // Expert Response
+  expertStance        ExpertStance?      // AGREES | MODIFIES | DISAGREES
+  expertAdvice        String?            // Detailed agronomic response
+  actionSteps         String[]           // Numbered recommended steps
+  precautions         String[]           // Chemical / environmental precautions
+  followUpNote        String?
+
+  // Farmer Feedback
+  feedbackRating      Int?               // 1 to 5
+  feedbackHelpful     Boolean?
+  feedbackComment     String?
+
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([userId, status, createdAt])
+  @@index([expertId, status])
+  @@map("consultation_cases")
+}
+
