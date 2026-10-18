@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAgronomicGuidance } from "@/features/crop-disease/data/treatment-guidance";
 import type { ModelDiagnosisResult, PredictionCandidate } from "@/features/crop-disease/types";
+import { getServerFarmerSession } from "@/lib/auth";
+import { recordUserDiseaseLog } from "@/lib/user-store";
 
 export const dynamic = "force-dynamic";
 
@@ -110,17 +112,23 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Resolve backend URL (server-only environment variable)
-    const backendUrl = process.env.PLANT_DISEASE_API_URL || "http://127.0.0.1:8000";
+    const backendUrl = process.env.PLANT_DISEASE_API_URL || "http://127.0.0.1:53147";
     const predictEndpoint = `${backendUrl.replace(/\/+$/, "")}/predict`;
 
-    // 4. Forward to FastAPI backend
+    // 4. Forward to FastAPI backend (with optional auth header for HTTPS tunnel)
     const outgoingFormData = new FormData();
     outgoingFormData.append("file", file, file.name);
+
+    const requestHeaders: Record<string, string> = {};
+    if (process.env.PLANT_DISEASE_API_KEY) {
+      requestHeaders["X-Api-Key"] = process.env.PLANT_DISEASE_API_KEY;
+    }
 
     let upstreamRes: Response;
     try {
       upstreamRes = await fetch(predictEndpoint, {
         method: "POST",
+        headers: requestHeaders,
         body: outgoingFormData,
         signal: AbortSignal.timeout(15000),
       });
@@ -203,6 +211,24 @@ export async function POST(req: NextRequest) {
       disclaimer:
         "Disclaimer: This is an AI-assisted prediction from the trained ResNet50-DCBAM model. For critical crop management decisions, consult a local agricultural extension officer or your nearest Krishi Vigyan Kendra (KVK).",
     };
+
+    // If user is authenticated, persist diagnosis to their persistent history
+    try {
+      const sessionUser = await getServerFarmerSession();
+      if (sessionUser?.id) {
+        await recordUserDiseaseLog(sessionUser.id, {
+          detectedDisease: `${pyData.crop} - ${pyData.condition}`,
+          scientificName: guidance.scientificName,
+          confidence: pyData.confidence,
+          severity: guidance.severity,
+          symptoms: guidance.summary,
+          treatmentSummary: guidance.actions.join("; "),
+          imageUrl: "/images/crop-tomato.webp",
+        });
+      }
+    } catch (saveErr) {
+      console.warn("Could not save diagnosis to user profile history:", saveErr);
+    }
 
     return NextResponse.json(
       {

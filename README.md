@@ -65,6 +65,7 @@ For detailed rules and guidelines, see:
 - [Git Workflow](docs/GIT_WORKFLOW.md)
 - [Test Plan](docs/TEST_PLAN.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)
+- [GitHub Actions & CI Setup Guide](.github/ACTIONS_SETUP.md)
 
 ---
 

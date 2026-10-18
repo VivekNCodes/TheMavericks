@@ -1,0 +1,57 @@
+# ==============================================================================
+# AgroSaathi - GitHub CODEOWNERS Configuration
+# Repository: VivekNCodes/TheMavericks
+# 
+# Note: CODEOWNERS triggers automatic review requests on matching PRs.
+# To enforce these reviews as blocking merge requirements, enable:
+# "Require review from Code Owners" in GitHub Branch Protection Rulesets.
+# ==============================================================================
+
+# Global Architecture, Core Infrastructure & Catch-all
+* @VivekNCodes
+
+# Feature Module 1: Crop Disease Detection (Lead Owned)
+/src/features/crop-disease/ @VivekNCodes
+/src/app/crop-disease/      @VivekNCodes
+/src/app/api/crop-disease/  @VivekNCodes
+
+# Feature Module 2: Mandi Price Intelligence (Member 2)
+# [Teammate handle to be added upon onboarding, e.g. @Member2Handle]
+/src/features/mandi-prices/ @VivekNCodes
+/src/app/mandi-prices/      @VivekNCodes
+
+# Feature Module 3: Smart Irrigation Advisor (Member 3)
+# [Teammate handle to be added upon onboarding, e.g. @Member3Handle]
+/src/features/irrigation/   @VivekNCodes
+/src/app/irrigation/        @VivekNCodes
+
+# Feature Module 4: Farmer Direct Marketplace (Member 4)
+# [Teammate handle to be added upon onboarding, e.g. @Member4Handle]
+/src/features/marketplace/  @VivekNCodes
+/src/app/marketplace/       @VivekNCodes
+
+# Feature Module 5: Crop Growing Planner (Member 5 / Agronomic Planning)
+# [Teammate handle to be added upon onboarding, e.g. @Member5Handle]
+/src/features/crop-planner/ @VivekNCodes
+/src/app/crop-planner/      @VivekNCodes
+/src/app/api/crop-planner/  @VivekNCodes
+
+# Feature Module 6: Multilingual Chatbot AI Sahayak (Lead Owned)
+/src/features/chatbot/      @VivekNCodes
+/src/app/assistant/         @VivekNCodes
+/src/app/chat/              @VivekNCodes
+/src/app/api/assistant/     @VivekNCodes
+
+# Shared Foundation & Infrastructure (Integration Lead Only)
+/src/app/layout.tsx         @VivekNCodes
+/src/app/globals.css        @VivekNCodes
+/src/components/            @VivekNCodes
+/src/lib/                   @VivekNCodes
+/src/types/                 @VivekNCodes
+/src/config/                @VivekNCodes
+/prisma/                    @VivekNCodes
+/package.json               @VivekNCodes
+/package-lock.json          @VivekNCodes
+/tsconfig.json              @VivekNCodes
+/next.config.mjs            @VivekNCodes
+/.github/                   @VivekNCodes

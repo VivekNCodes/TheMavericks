@@ -19,6 +19,7 @@
 # misc
 .DS_Store
 *.pem
+.backup_*
 
 # debug
 npm-debug.log*
@@ -48,3 +49,5 @@ __pycache__/
 public/uploads/marketplace/*
 !public/uploads/marketplace/.gitkeep
 !public/uploads/.gitkeep
+# Local JSON store fallback
+.data/
