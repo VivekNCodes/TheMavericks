@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="onionGrad" cx="40%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#E9D5FF"/>
+      <stop offset="50%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#6B21A8"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="#FAF5FF"/>
+  <!-- Roots -->
+  <path d="M56 95 L52 105 M60 96 L60 108 M64 95 L68 105" stroke="#9333EA" stroke-width="2" stroke-linecap="round"/>
+  <!-- Bulb -->
+  <path d="M60 25 C45 40 32 60 32 75 C32 90 44 96 60 96 C76 96 88 90 88 75 C88 60 75 40 60 25 Z" fill="url(#onionGrad)" filter="drop-shadow(0 6px 12px rgba(107,33,168,0.25))"/>
+  <!-- Stripes -->
+  <path d="M60 25 Q50 60 50 90" stroke="#7E22CE" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <path d="M60 25 Q70 60 70 90" stroke="#7E22CE" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <!-- Green Sprout -->
+  <path d="M60 25 Q62 14 68 8 M60 25 Q56 16 52 10" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+</svg>

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="chiliGrad" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#86EFAC"/>
+      <stop offset="45%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#14532D"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="#F0FDF4"/>
+  <!-- Calyx and stalk -->
+  <path d="M42 22 Q48 10 58 8" stroke="#15803D" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse cx="44" cy="24" rx="8" ry="4" fill="#166534" transform="rotate(-20 44 24)"/>
+  <!-- Chili Body curved -->
+  <path d="M44 24 C55 35 68 55 68 75 C68 90 62 100 50 105 C55 98 56 88 54 75 C50 55 42 38 38 28 Z" fill="url(#chiliGrad)" filter="drop-shadow(0 6px 12px rgba(22,163,74,0.3))"/>
+  <!-- Highlight -->
+  <path d="M44 32 Q52 50 52 70" stroke="#BBF7D0" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+</svg>

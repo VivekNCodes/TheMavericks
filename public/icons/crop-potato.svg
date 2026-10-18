@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <radialGradient id="potatoGrad" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#E2B170"/>
+      <stop offset="60%" stop-color="#B7791F"/>
+      <stop offset="100%" stop-color="#744210"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="#FDF8F3"/>
+  <!-- Potato Body -->
+  <path d="M35 50 C28 65 35 88 55 92 C75 96 95 86 92 65 C89 45 78 35 55 35 C42 35 38 42 35 50 Z" fill="url(#potatoGrad)" filter="drop-shadow(0 6px 12px rgba(183,121,31,0.25))"/>
+  <!-- Potato eyes -->
+  <ellipse cx="48" cy="52" rx="3" ry="1.5" fill="#744210" opacity="0.6"/>
+  <ellipse cx="68" cy="62" rx="4" ry="2" fill="#744210" opacity="0.6"/>
+  <ellipse cx="56" cy="76" rx="3" ry="1.5" fill="#744210" opacity="0.6"/>
+  <ellipse cx="78" cy="50" rx="3" ry="1.5" fill="#744210" opacity="0.6"/>
+</svg>
