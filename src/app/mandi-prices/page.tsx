@@ -14,7 +14,7 @@ export default function MandiPricesPage() {
   const moduleMeta = moduleRegistry["mandi-prices"];
 
   return (
-    <ModulePlaceholder module={moduleMeta}>
+    <ModulePlaceholder module={moduleMeta} showDevBanner={false}>
       <MandiPricesPreview />
     </ModulePlaceholder>
   );
